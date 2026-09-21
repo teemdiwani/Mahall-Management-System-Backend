@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const assets_controller_js_1 = require("./assets.controller.js");
+const auth_js_1 = require("../../middleware/auth.js");
+const authorize_js_1 = require("../../middleware/authorize.js");
+const permissions_js_1 = require("../../constants/permissions.js");
+const router = (0, express_1.Router)();
+router.use(auth_js_1.authenticate);
+router.get('/', assets_controller_js_1.AssetsController.list);
+router.get('/stats', assets_controller_js_1.AssetsController.getStats);
+router.post('/', (0, authorize_js_1.requirePermission)(permissions_js_1.PERMISSIONS.ASSETS_MANAGE), assets_controller_js_1.AssetsController.create);
+router.patch('/:id', (0, authorize_js_1.requirePermission)(permissions_js_1.PERMISSIONS.ASSETS_MANAGE), assets_controller_js_1.AssetsController.update);
+exports.default = router;

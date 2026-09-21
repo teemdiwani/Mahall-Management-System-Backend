@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const finance_controller_js_1 = require("./finance.controller.js");
+const auth_js_1 = require("../../middleware/auth.js");
+const authorize_js_1 = require("../../middleware/authorize.js");
+const permissions_js_1 = require("../../constants/permissions.js");
+const router = (0, express_1.Router)();
+router.use(auth_js_1.authenticate);
+router.get('/overview', (0, authorize_js_1.requirePermission)(permissions_js_1.PERMISSIONS.FINANCE_VIEW), finance_controller_js_1.FinanceController.getOverview);
+router.get('/expenses', (0, authorize_js_1.requirePermission)(permissions_js_1.PERMISSIONS.FINANCE_VIEW), finance_controller_js_1.FinanceController.listExpenses);
+router.post('/expenses', (0, authorize_js_1.requirePermission)(permissions_js_1.PERMISSIONS.FINANCE_CREATE_EXPENSE), finance_controller_js_1.FinanceController.recordExpense);
+exports.default = router;

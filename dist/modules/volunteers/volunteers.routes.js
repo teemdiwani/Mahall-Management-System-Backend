@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const volunteers_controller_js_1 = require("./volunteers.controller.js");
+const auth_js_1 = require("../../middleware/auth.js");
+const authorize_js_1 = require("../../middleware/authorize.js");
+const permissions_js_1 = require("../../constants/permissions.js");
+const router = (0, express_1.Router)();
+router.use(auth_js_1.authenticate);
+router.get('/', volunteers_controller_js_1.VolunteersController.list);
+router.post('/register', volunteers_controller_js_1.VolunteersController.register);
+router.patch('/:id/availability', (0, authorize_js_1.requirePermission)(permissions_js_1.PERMISSIONS.VOLUNTEERS_MANAGE), volunteers_controller_js_1.VolunteersController.updateAvailability);
+router.patch('/:id/status', (0, authorize_js_1.requirePermission)(permissions_js_1.PERMISSIONS.VOLUNTEERS_MANAGE), volunteers_controller_js_1.VolunteersController.updateStatus);
+exports.default = router;
