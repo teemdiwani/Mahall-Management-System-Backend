@@ -20,7 +20,7 @@ router.get('/secretary', (0, authorize_js_1.requireRole)(roles_js_1.ROLES.SUPER_
 // Welfare Dashboard
 router.get('/welfare', (0, authorize_js_1.requireRole)(roles_js_1.ROLES.SUPER_ADMIN, roles_js_1.ROLES.WELFARE_OFFICER), dashboard_controller_js_1.DashboardController.getWelfareDashboard);
 // Madrasa Dashboard
-router.get('/madrasa', (0, authorize_js_1.requireRole)(roles_js_1.ROLES.SUPER_ADMIN, roles_js_1.ROLES.MADRASA_ADMIN), dashboard_controller_js_1.DashboardController.getMadrasaDashboard);
+router.get('/madrasa', (0, authorize_js_1.requireRole)(roles_js_1.ROLES.SUPER_ADMIN, roles_js_1.ROLES.SECRETARY, roles_js_1.ROLES.MADRASA_ADMIN), dashboard_controller_js_1.DashboardController.getMadrasaDashboard);
 // Imam Dashboard
 router.get('/imam', (0, authorize_js_1.requireRole)(roles_js_1.ROLES.SUPER_ADMIN, roles_js_1.ROLES.IMAM), dashboard_controller_js_1.DashboardController.getImamDashboard);
 exports.default = router;

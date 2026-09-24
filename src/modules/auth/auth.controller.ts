@@ -53,4 +53,34 @@ export class AuthController {
       next(error);
     }
   }
+
+  static async forgotPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email } = req.body;
+      const result = await AuthService.forgotPassword(email);
+      return ApiResponse.success(res, result, 200, result.message);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async verifyResetOtp(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email, otp } = req.body;
+      const result = await AuthService.verifyResetOtp(email, otp);
+      return ApiResponse.success(res, result, 200, result.message);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async resetPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email, otp, newPassword } = req.body;
+      const result = await AuthService.resetPasswordWithOtp(email, otp, newPassword);
+      return ApiResponse.success(res, result, 200, result.message);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

@@ -10,6 +10,7 @@ import { Mosque } from '../mosque/mosque.model.js';
 import { Announcement } from '../announcements/announcement.model.js';
 import { CommitteeMeeting } from '../committee/committee.model.js';
 import { Volunteer } from '../volunteers/volunteer.model.js';
+import { MadrasaService } from '../madrasa/madrasa.service.js';
 import { ROLES, type UserRole } from '../../constants/roles.js';
 
 export class DashboardService {
@@ -234,6 +235,13 @@ export class DashboardService {
       (p) => p.month === currentMonth && p.type === 'MONTHLY' && p.status === 'PAID'
     );
 
+    const madrasaParentPortal = await MadrasaService.getParentPortal(userId, email).catch(() => ({
+      hasChildrenInMadrasa: false,
+      students: [],
+      announcements: [],
+      stats: null,
+    }));
+
     return {
       member,
       family,
@@ -246,6 +254,7 @@ export class DashboardService {
       jumahDetails: mosque?.jumahDetails || null,
       announcements,
       upcomingEvents,
+      madrasaParentPortal,
     };
   }
 

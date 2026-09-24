@@ -33,23 +33,29 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MadrasaStudent = exports.MadrasaClass = void 0;
+exports.MadrasaStudent = exports.Madrasa = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const madrasaClassSchema = new mongoose_1.Schema({
+const madrasaSchema = new mongoose_1.Schema({
     name: { type: String, required: true, trim: true },
-    grade: { type: String, required: true },
-    academicYear: { type: String, required: true, default: '2026-2027' },
-    teacherName: { type: String, required: true },
-    capacity: { type: Number, default: 30 },
-    roomNumber: { type: String },
+    code: { type: String, required: true, unique: true, uppercase: true, trim: true },
+    regNumber: { type: String, trim: true },
+    board: { type: String, default: 'Samastha Kerala Islam Matha Vidyabhyasa Board' },
+    location: { type: String, required: true },
+    establishedYear: { type: Number },
+    sadarUsthad: { type: String, required: true, trim: true },
+    phone: { type: String, required: true },
+    email: { type: String, trim: true },
+    timings: { type: String, default: '06:30 AM – 08:30 AM' },
+    status: { type: String, enum: ['ACTIVE', 'INACTIVE'], default: 'ACTIVE', index: true },
+    description: { type: String },
 }, { timestamps: true });
-exports.MadrasaClass = mongoose_1.default.model('MadrasaClass', madrasaClassSchema);
+exports.Madrasa = mongoose_1.default.model('Madrasa', madrasaSchema);
 const madrasaStudentSchema = new mongoose_1.Schema({
+    madrasaId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Madrasa', required: true, index: true },
     admissionNumber: { type: String, required: true, unique: true, index: true },
     name: { type: String, required: true, trim: true },
     memberId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Member' },
     familyId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Family' },
-    classId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'MadrasaClass', required: true, index: true },
     dateOfBirth: { type: Date, required: true },
     gender: { type: String, enum: ['MALE', 'FEMALE'], required: true },
     guardianName: { type: String, required: true },

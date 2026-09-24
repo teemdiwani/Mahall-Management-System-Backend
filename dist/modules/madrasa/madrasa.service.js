@@ -4,43 +4,111 @@ exports.MadrasaService = void 0;
 const madrasa_model_js_1 = require("./madrasa.model.js");
 const member_model_js_1 = require("../members/member.model.js");
 const roles_js_1 = require("../../constants/roles.js");
-// In-memory teacher collection (stored as separate Mongoose model for scalability)
 const madrasa_extra_model_js_1 = require("./madrasa.extra.model.js");
 class MadrasaService {
     static async getMadrasaDashboard() {
-        const [totalStudents, totalClasses, activeTeachers] = await Promise.all([
+        const [totalMadrasasCount, totalStudents, maleStudents, femaleStudents, activeTeachers, madrasas] = await Promise.all([
+            madrasa_model_js_1.Madrasa.countDocuments({ status: 'ACTIVE' }),
             madrasa_model_js_1.MadrasaStudent.countDocuments({ status: 'ACTIVE' }),
-            madrasa_model_js_1.MadrasaClass.countDocuments(),
+            madrasa_model_js_1.MadrasaStudent.countDocuments({ status: 'ACTIVE', gender: 'MALE' }),
+            madrasa_model_js_1.MadrasaStudent.countDocuments({ status: 'ACTIVE', gender: 'FEMALE' }),
             madrasa_extra_model_js_1.MadrasaTeacher.countDocuments({ status: 'ACTIVE' }),
+            madrasa_model_js_1.Madrasa.find().sort({ name: 1 }),
         ]);
-        const studentsPerClass = await madrasa_model_js_1.MadrasaStudent.aggregate([
-            { $match: { status: 'ACTIVE' } },
-            { $group: { _id: '$classId', count: { $sum: 1 } } },
+        // Per-madrasa aggregates
+        const [studentCounts, teacherCounts] = await Promise.all([
+            madrasa_model_js_1.MadrasaStudent.aggregate([
+                { $match: { status: 'ACTIVE' } },
+                { $group: { _id: '$madrasaId', count: { $sum: 1 } } },
+            ]),
+            madrasa_extra_model_js_1.MadrasaTeacher.aggregate([
+                { $match: { status: 'ACTIVE' } },
+                { $group: { _id: '$madrasaId', count: { $sum: 1 } } },
+            ]),
         ]);
-        const classes = await madrasa_model_js_1.MadrasaClass.find();
-        const classMap = new Map(classes.map((c) => [c._id.toString(), c.name]));
-        const breakdown = studentsPerClass.map((s) => ({
-            className: classMap.get(s._id.toString()) || 'Unknown',
-            studentsCount: s.count,
+        const studentCountMap = new Map(studentCounts.map((s) => [s._id ? s._id.toString() : 'unassigned', s.count]));
+        const teacherCountMap = new Map(teacherCounts.map((t) => [t._id ? t._id.toString() : 'unassigned', t.count]));
+        // Enrich madrasas with stats
+        const enrichedMadrasas = madrasas.map((m) => {
+            const mId = m._id.toString();
+            const sCount = studentCountMap.get(mId) || 0;
+            const tCount = teacherCountMap.get(mId) || 0;
+            return {
+                ...m.toObject(),
+                studentCount: sCount,
+                usthadCount: tCount,
+            };
+        });
+        const madrasaBreakdown = enrichedMadrasas.map((m) => ({
+            madrasaName: m.name,
+            code: m.code,
+            studentsCount: m.studentCount,
+            usthadCount: m.usthadCount,
         }));
         return {
-            cards: { totalStudents, totalClasses, activeTeachers: activeTeachers || classes.length, attendanceRate: 94.8 },
-            classes,
-            breakdown,
+            cards: {
+                totalMadrasas: totalMadrasasCount || madrasas.length,
+                totalStudents,
+                maleStudents,
+                femaleStudents,
+                activeTeachers,
+            },
+            madrasas: enrichedMadrasas,
+            madrasaBreakdown,
         };
     }
-    static async listClasses() {
-        return madrasa_model_js_1.MadrasaClass.find().sort({ grade: 1 });
+    // --- Madrasa Management ---
+    static async listMadrasas() {
+        const madrasas = await madrasa_model_js_1.Madrasa.find().sort({ name: 1 });
+        const [studentCounts, teacherCounts] = await Promise.all([
+            madrasa_model_js_1.MadrasaStudent.aggregate([
+                { $match: { status: 'ACTIVE' } },
+                { $group: { _id: '$madrasaId', count: { $sum: 1 } } },
+            ]),
+            madrasa_extra_model_js_1.MadrasaTeacher.aggregate([
+                { $match: { status: 'ACTIVE' } },
+                { $group: { _id: '$madrasaId', count: { $sum: 1 } } },
+            ]),
+        ]);
+        const studentMap = new Map(studentCounts.map((s) => [s._id?.toString(), s.count]));
+        const teacherMap = new Map(teacherCounts.map((t) => [t._id?.toString(), t.count]));
+        return madrasas.map((m) => {
+            const id = m._id.toString();
+            return {
+                ...m.toObject(),
+                studentCount: studentMap.get(id) || 0,
+                usthadCount: teacherMap.get(id) || 0,
+            };
+        });
     }
-    static async createClass(data) {
-        return madrasa_model_js_1.MadrasaClass.create(data);
+    static async getMadrasaById(id) {
+        const madrasa = await madrasa_model_js_1.Madrasa.findById(id);
+        if (!madrasa)
+            return null;
+        const [students, teachers] = await Promise.all([
+            madrasa_model_js_1.MadrasaStudent.find({ madrasaId: id }).sort({ admissionNumber: 1 }),
+            madrasa_extra_model_js_1.MadrasaTeacher.find({ madrasaId: id }).sort({ name: 1 }),
+        ]);
+        return {
+            madrasa,
+            students,
+            teachers,
+            stats: {
+                studentCount: students.filter(s => s.status === 'ACTIVE').length,
+                teacherCount: teachers.filter(t => t.status === 'ACTIVE').length,
+            },
+        };
     }
-    static async updateClass(id, data) {
-        return madrasa_model_js_1.MadrasaClass.findByIdAndUpdate(id, data, { new: true });
+    static async createMadrasa(data) {
+        return madrasa_model_js_1.Madrasa.create(data);
     }
-    static async deleteClass(id) {
-        return madrasa_model_js_1.MadrasaClass.findByIdAndDelete(id);
+    static async updateMadrasa(id, data) {
+        return madrasa_model_js_1.Madrasa.findByIdAndUpdate(id, data, { new: true });
     }
+    static async deleteMadrasa(id) {
+        return madrasa_model_js_1.Madrasa.findByIdAndDelete(id);
+    }
+    // --- Students ---
     static async listStudents(userRole, userId, query) {
         const page = Math.max(1, Number(query.page) || 1);
         const limit = Math.min(100, Math.max(1, Number(query.limit) || 25));
@@ -52,10 +120,12 @@ class MadrasaService {
                 return { items: [], page, limit, total: 0 };
             filter.familyId = member.familyId;
         }
-        if (query.classId)
-            filter.classId = query.classId;
+        if (query.madrasaId)
+            filter.madrasaId = query.madrasaId;
         if (query.status)
             filter.status = query.status;
+        if (query.gender)
+            filter.gender = query.gender;
         if (query.search) {
             filter.$or = [
                 { name: { $regex: query.search, $options: 'i' } },
@@ -64,7 +134,12 @@ class MadrasaService {
             ];
         }
         const [items, total] = await Promise.all([
-            madrasa_model_js_1.MadrasaStudent.find(filter).populate('classId', 'name grade teacherName roomNumber').populate('familyId', 'familyCode name').sort({ admissionNumber: 1 }).skip(skip).limit(limit),
+            madrasa_model_js_1.MadrasaStudent.find(filter)
+                .populate('madrasaId', 'name code')
+                .populate('familyId', 'familyCode name')
+                .sort({ admissionNumber: 1 })
+                .skip(skip)
+                .limit(limit),
             madrasa_model_js_1.MadrasaStudent.countDocuments(filter),
         ]);
         return { items, page, limit, total };
@@ -75,13 +150,22 @@ class MadrasaService {
             const count = await madrasa_model_js_1.MadrasaStudent.countDocuments();
             admNo = `MDR-${String(count + 101).padStart(4, '0')}`;
         }
-        return madrasa_model_js_1.MadrasaStudent.create({ ...data, admissionNumber: admNo, status: 'ACTIVE' });
+        return madrasa_model_js_1.MadrasaStudent.create({ ...data, admissionNumber: admNo, status: data.status || 'ACTIVE' });
     }
     static async updateStudent(id, data) {
         return madrasa_model_js_1.MadrasaStudent.findByIdAndUpdate(id, data, { new: true });
     }
-    static async listTeachers() {
-        return madrasa_extra_model_js_1.MadrasaTeacher.find().sort({ name: 1 });
+    static async deleteStudent(id) {
+        return madrasa_model_js_1.MadrasaStudent.findByIdAndDelete(id);
+    }
+    // --- Teachers (Usthad) ---
+    static async listTeachers(query) {
+        const filter = {};
+        if (query?.madrasaId)
+            filter.madrasaId = query.madrasaId;
+        return madrasa_extra_model_js_1.MadrasaTeacher.find(filter)
+            .populate('madrasaId', 'name code')
+            .sort({ name: 1 });
     }
     static async createTeacher(data) {
         return madrasa_extra_model_js_1.MadrasaTeacher.create(data);
@@ -89,41 +173,8 @@ class MadrasaService {
     static async updateTeacher(id, data) {
         return madrasa_extra_model_js_1.MadrasaTeacher.findByIdAndUpdate(id, data, { new: true });
     }
-    static async listAttendance(query) {
-        const filter = {};
-        if (query.classId)
-            filter.classId = query.classId;
-        if (query.date)
-            filter.date = new Date(query.date);
-        return madrasa_extra_model_js_1.MadrasaAttendance.find(filter)
-            .populate('classId', 'name grade')
-            .populate('records.studentId', 'name admissionNumber')
-            .sort({ date: -1 })
-            .limit(50);
-    }
-    static async recordAttendance(data) {
-        const existing = await madrasa_extra_model_js_1.MadrasaAttendance.findOne({ classId: data.classId, date: new Date(data.date) });
-        if (existing) {
-            existing.records = data.records;
-            existing.recordedBy = data.recordedBy;
-            return existing.save();
-        }
-        return madrasa_extra_model_js_1.MadrasaAttendance.create(data);
-    }
-    static async listExams() {
-        return madrasa_extra_model_js_1.MadrasaExam.find().populate('classId', 'name grade').sort({ examDate: -1 });
-    }
-    static async createExam(data) {
-        return madrasa_extra_model_js_1.MadrasaExam.create(data);
-    }
-    static async recordResults(examId, results) {
-        await madrasa_extra_model_js_1.MadrasaResult.deleteMany({ examId });
-        return madrasa_extra_model_js_1.MadrasaResult.insertMany(results.map(r => ({ ...r, examId })));
-    }
-    static async getResults(examId) {
-        return madrasa_extra_model_js_1.MadrasaResult.find({ examId })
-            .populate('studentId', 'name admissionNumber')
-            .sort({ totalMarks: -1 });
+    static async deleteTeacher(id) {
+        return madrasa_extra_model_js_1.MadrasaTeacher.findByIdAndDelete(id);
     }
 }
 exports.MadrasaService = MadrasaService;

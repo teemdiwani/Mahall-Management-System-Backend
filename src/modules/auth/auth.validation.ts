@@ -15,3 +15,18 @@ export const loginSchema = z.object({
 export const googleAuthSchema = z.object({
   credential: z.string().min(1, 'Google credential token is required'),
 });
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+});
+
+export const verifyResetOtpSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  otp: z.string().length(6, 'Verification code must be exactly 6 digits'),
+});
+
+export const resetPasswordSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  otp: z.string().length(6, 'Verification code must be exactly 6 digits'),
+  newPassword: z.string().min(6, 'New password must be at least 6 characters'),
+});

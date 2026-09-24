@@ -8,6 +8,7 @@ import { ROLE_PERMISSIONS, type Permission } from '../../constants/permissions.j
 import { ApiError } from '../../utils/apiError.js';
 import { generateToken } from '../../utils/jwt.js';
 import { env } from '../../config/env.js';
+import { mailService } from '../../utils/mailService.js';
 
 const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID);
 
@@ -188,4 +189,91 @@ export class AuthService {
       permissions,
     };
   }
+
+  static async forgotPassword(email: string) {
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    if (!user) {
+      throw ApiError.notFound('No account found with this email address');
+    }
+
+    if (!user.isActive) {
+      throw ApiError.forbidden('This account is currently inactive. Please contact the Mahallu administrator.');
+    }
+
+    // Generate 6-digit cryptographic-quality numeric OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    user.passwordResetOtp = otp;
+    user.passwordResetExpires = expires;
+    await user.save();
+
+    await mailService.sendPasswordResetOtpEmail({
+      email: user.email,
+      name: user.name,
+      otp,
+    });
+
+    return {
+      email: user.email,
+      message: 'A 6-digit verification code has been sent to your email.',
+    };
+  }
+
+  static async verifyResetOtp(email: string, otp: string) {
+    const user = await User.findOne({
+      email: email.toLowerCase().trim(),
+    }).select('+passwordResetOtp +passwordResetExpires');
+
+    if (!user || !user.passwordResetOtp || !user.passwordResetExpires) {
+      throw ApiError.badRequest('Invalid or expired verification request. Please request a new OTP.');
+    }
+
+    if (user.passwordResetExpires < new Date()) {
+      throw ApiError.badRequest('This verification code has expired. Please request a new code.');
+    }
+
+    if (user.passwordResetOtp !== otp.trim()) {
+      throw ApiError.badRequest('Invalid 6-digit verification code. Please check and try again.');
+    }
+
+    return {
+      valid: true,
+      message: 'OTP verified successfully. You can now set a new password.',
+    };
+  }
+
+  static async resetPasswordWithOtp(email: string, otp: string, newPassword: string) {
+    const user = await User.findOne({
+      email: email.toLowerCase().trim(),
+    }).select('+passwordResetOtp +passwordResetExpires +passwordHash');
+
+    if (!user || !user.passwordResetOtp || !user.passwordResetExpires) {
+      throw ApiError.badRequest('Invalid or expired verification request. Please request a new OTP.');
+    }
+
+    if (user.passwordResetExpires < new Date()) {
+      throw ApiError.badRequest('This verification code has expired. Please request a new code.');
+    }
+
+    if (user.passwordResetOtp !== otp.trim()) {
+      throw ApiError.badRequest('Invalid 6-digit verification code.');
+    }
+
+    if (newPassword.length < 6) {
+      throw ApiError.badRequest('New password must be at least 6 characters long.');
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.passwordHash = await bcrypt.hash(newPassword, salt);
+    user.passwordResetOtp = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save();
+
+    return {
+      success: true,
+      message: 'Your password has been reset successfully. You can now sign in with your new password.',
+    };
+  }
 }
+

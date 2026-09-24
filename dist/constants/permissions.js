@@ -81,6 +81,9 @@ exports.ROLE_PERMISSIONS = {
         exports.PERMISSIONS.USERS_VIEW,
         exports.PERMISSIONS.HAJJ_UMRAH_VIEW,
         exports.PERMISSIONS.HAJJ_UMRAH_MANAGE,
+        exports.PERMISSIONS.MADRASA_MANAGE,
+        exports.PERMISSIONS.MADRASA_ATTENDANCE,
+        exports.PERMISSIONS.MADRASA_GRADES,
     ],
     [roles_js_1.ROLES.TREASURER]: [
         exports.PERMISSIONS.FINANCE_VIEW,

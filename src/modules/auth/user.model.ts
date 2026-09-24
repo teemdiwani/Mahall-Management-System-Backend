@@ -12,6 +12,8 @@ export interface IUser extends Document {
   customPermissions: string[];
   isActive: boolean;
   lastLogin?: Date;
+  passwordResetOtp?: string;
+  passwordResetExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,6 +40,14 @@ const userSchema = new Schema<IUser>(
     },
     passwordHash: {
       type: String,
+      select: false,
+    },
+    passwordResetOtp: {
+      type: String,
+      select: false,
+    },
+    passwordResetExpires: {
+      type: Date,
       select: false,
     },
     googleId: {

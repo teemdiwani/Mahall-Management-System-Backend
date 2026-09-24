@@ -26,7 +26,7 @@ router.get('/secretary', requireRole(ROLES.SUPER_ADMIN, ROLES.SECRETARY), Dashbo
 router.get('/welfare', requireRole(ROLES.SUPER_ADMIN, ROLES.WELFARE_OFFICER), DashboardController.getWelfareDashboard);
 
 // Madrasa Dashboard
-router.get('/madrasa', requireRole(ROLES.SUPER_ADMIN, ROLES.MADRASA_ADMIN), DashboardController.getMadrasaDashboard);
+router.get('/madrasa', requireRole(ROLES.SUPER_ADMIN, ROLES.SECRETARY, ROLES.MADRASA_ADMIN), DashboardController.getMadrasaDashboard);
 
 // Imam Dashboard
 router.get('/imam', requireRole(ROLES.SUPER_ADMIN, ROLES.IMAM), DashboardController.getImamDashboard);

@@ -26,26 +26,27 @@ class MailService {
   }
 
   private initTransporter() {
-    if (env.SMTP_HOST && env.SMTP_USER) {
+    const user = env.SMTP_USER || 'teemdiwani@gmail.com';
+    const pass = (env.SMTP_PASS || env.GMAIL_APP_PASSWORD || process.env.GMAIL_APP_PASSWORD || '').replace(/\s+/g, '');
+
+    if (pass) {
       try {
         this.transporter = nodemailer.createTransport({
-          host: env.SMTP_HOST,
-          port: env.SMTP_PORT,
-          secure: env.SMTP_SECURE,
+          service: 'gmail',
           auth: {
-            user: env.SMTP_USER,
-            pass: env.SMTP_PASS,
+            user,
+            pass,
           },
         });
         this.isConfigured = true;
-        logger.info(`📧 Nodemailer configured with SMTP host: ${env.SMTP_HOST}:${env.SMTP_PORT}`);
+        logger.info(`📧 Nodemailer configured for Gmail (${user})`);
       } catch (err) {
-        logger.error({ err }, '❌ Failed to initialize Nodemailer SMTP transporter');
+        logger.error({ err }, '❌ Failed to initialize Nodemailer Gmail transporter');
         this.isConfigured = false;
       }
     } else {
       logger.warn(
-        '⚠️ SMTP_HOST / SMTP_USER not set. Nodemailer will simulate email dispatch in development mode.'
+        `⚠️ Google App Password not set in .env (SMTP_PASS or GMAIL_APP_PASSWORD). Nodemailer will simulate email dispatch and log OTP to the console.`
       );
       this.isConfigured = false;
     }
@@ -263,6 +264,117 @@ Mahallu Management Committee Office
       return { success: true, simulated: true };
     }
   }
+
+  /**
+   * Send 6-digit OTP verification code for password reset via Nodemailer
+   */
+  async sendPasswordResetOtpEmail(data: {
+    email: string;
+    name?: string;
+    otp: string;
+  }): Promise<{ success: boolean; messageId?: string; simulated?: boolean }> {
+    const sender = env.SMTP_FROM || 'MahallConnect <teemdiwani@gmail.com>';
+    const subject = `🔐 ${data.otp} is your MahallConnect Password Reset Code`;
+
+    const textContent = `Assalamu Alaikum ${data.name || 'User'},
+
+Your 6-digit verification code to reset your password is:
+
+${data.otp}
+
+This code is valid for 10 minutes. Please do not share this OTP with anyone.
+
+If you did not request a password reset, please ignore this email or contact your Mahallu administrator immediately.
+
+Warm regards,
+Mahallu Management Team
+`;
+
+    const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Password Reset Verification Code</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f8fafc; margin: 0; padding: 24px; color: #1e293b;">
+  <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+    <div style="background: linear-gradient(135deg, #059669, #0f766e); padding: 28px; text-align: center; color: white;">
+      <div style="font-size: 32px; margin-bottom: 6px;">☽</div>
+      <h2 style="margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.5px;">MahallConnect</h2>
+      <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">Digital Mahallu Management System</p>
+    </div>
+
+    <div style="padding: 32px 28px;">
+      <h3 style="margin: 0 0 12px; font-size: 18px; color: #0f172a;">Password Reset Verification</h3>
+      <p style="margin: 0 0 20px; font-size: 14px; color: #475569; line-height: 1.6;">
+        Assalamu Alaikum <strong>${data.name || 'valued user'}</strong>,<br/>
+        We received a request to reset your MahallConnect password for <strong>${data.email}</strong>. Use the 6-digit verification code below to proceed:
+      </p>
+
+      <div style="background: #f0fdf4; border: 2px dashed #10b981; border-radius: 14px; padding: 24px; text-align: center; margin: 24px 0;">
+        <span style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #047857; margin-bottom: 8px;">6-Digit OTP Code</span>
+        <span style="display: block; font-size: 38px; font-weight: 800; letter-spacing: 10px; color: #065f46; font-family: 'Courier New', Courier, monospace;">${data.otp}</span>
+      </div>
+
+      <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin: 0 0 16px;">
+        ⏱️ <strong>This OTP is valid for 10 minutes.</strong> Never share this code with anyone. Mahallu committee members will never ask for your verification code.
+      </p>
+      
+      <p style="font-size: 12px; color: #94a3b8; line-height: 1.4; margin: 0; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+        If you did not request a password reset, you can safely ignore this email. Your account remains completely secure.
+      </p>
+    </div>
+
+    <div style="background: #f8fafc; padding: 16px 28px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9;">
+      Sent via <strong>MahallConnect Mail System</strong> (${env.SMTP_USER || 'teemdiwani@gmail.com'})
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+    // Ensure transporter is loaded if env was recently populated
+    if (!this.transporter) {
+      this.initTransporter();
+    }
+
+    if (this.isConfigured && this.transporter) {
+      try {
+        const info = await this.transporter.sendMail({
+          from: sender,
+          to: data.email,
+          subject,
+          text: textContent,
+          html: htmlContent,
+        });
+
+        logger.info(
+          { messageId: info.messageId, recipient: data.email },
+          `✅ 6-digit OTP email dispatched successfully via Nodemailer to ${data.email}`
+        );
+        return { success: true, messageId: info.messageId, simulated: false };
+      } catch (error) {
+        logger.error({ error }, '❌ Error sending OTP email via Nodemailer');
+        logger.info(`🔑 [FALLBACK OTP LOG] Recipient: ${data.email} | OTP: ${data.otp}`);
+        return { success: false, simulated: false };
+      }
+    } else {
+      // In development or when Google App Password is not yet set in .env
+      logger.info(
+        `\n=======================================================\n` +
+          `📧 [SIMULATED NODEMAILER OTP DISPATCH]\n` +
+          `From: ${sender}\n` +
+          `To: ${data.email}\n` +
+          `Subject: ${subject}\n` +
+          `🔑 6-DIGIT OTP CODE: [ ${data.otp} ]\n` +
+          `Expires in: 10 minutes\n` +
+          `=======================================================\n`
+      );
+      return { success: true, simulated: true };
+    }
+  }
 }
 
 export const mailService = new MailService();
+

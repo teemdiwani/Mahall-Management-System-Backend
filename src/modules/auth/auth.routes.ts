@@ -7,6 +7,9 @@ import {
   registerSchema,
   loginSchema,
   googleAuthSchema,
+  forgotPasswordSchema,
+  verifyResetOtpSchema,
+  resetPasswordSchema,
 } from './auth.validation.js';
 
 const router = Router();
@@ -30,6 +33,27 @@ router.post(
   authLimiter,
   validateRequest({ body: googleAuthSchema }),
   AuthController.googleAuth
+);
+
+router.post(
+  '/forgot-password',
+  authLimiter,
+  validateRequest({ body: forgotPasswordSchema }),
+  AuthController.forgotPassword
+);
+
+router.post(
+  '/verify-reset-otp',
+  authLimiter,
+  validateRequest({ body: verifyResetOtpSchema }),
+  AuthController.verifyResetOtp
+);
+
+router.post(
+  '/reset-password',
+  authLimiter,
+  validateRequest({ body: resetPasswordSchema }),
+  AuthController.resetPassword
 );
 
 router.get('/me', authenticate, AuthController.getMe);

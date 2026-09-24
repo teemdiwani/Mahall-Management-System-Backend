@@ -10,7 +10,16 @@ import { Payment } from '../modules/payments/payment.model.js';
 import { Expense } from '../modules/finance/expense.model.js';
 import { Application } from '../modules/applications/application.model.js';
 import { ApplicationHistory } from '../modules/applications/applicationHistory.model.js';
-import { MadrasaClass, MadrasaStudent } from '../modules/madrasa/madrasa.model.js';
+import { Madrasa, MadrasaStudent } from '../modules/madrasa/madrasa.model.js';
+import {
+  MadrasaTeacher,
+  MadrasaClass,
+  MadrasaTimetable,
+  MadrasaExamResult,
+  MadrasaFee,
+  MadrasaAttendance,
+  MadrasaAnnouncement,
+} from '../modules/madrasa/madrasa.extra.model.js';
 import { Mosque } from '../modules/mosque/mosque.model.js';
 import { Event } from '../modules/events/event.model.js';
 import { Volunteer } from '../modules/volunteers/volunteer.model.js';
@@ -40,8 +49,15 @@ const seedDatabase = async () => {
     Expense.deleteMany({}),
     Application.deleteMany({}),
     ApplicationHistory.deleteMany({}),
-    MadrasaClass.deleteMany({}),
+    Madrasa.deleteMany({}),
     MadrasaStudent.deleteMany({}),
+    MadrasaTeacher.deleteMany({}),
+    MadrasaClass.deleteMany({}),
+    MadrasaTimetable.deleteMany({}),
+    MadrasaExamResult.deleteMany({}),
+    MadrasaFee.deleteMany({}),
+    MadrasaAttendance.deleteMany({}),
+    MadrasaAnnouncement.deleteMany({}),
     Mosque.deleteMany({}),
     Event.deleteMany({}),
     Volunteer.deleteMany({}),
@@ -497,69 +513,549 @@ const seedDatabase = async () => {
     },
   ]);
 
-  console.log('📚 Creating Madrasa Classes & Students...');
-  const cls1 = await MadrasaClass.create({
-    name: 'Class 1 - Al-Mubtadi (Beginners)',
-    grade: 'Grade 1',
-    academicYear: '2026-2027',
-    teacherName: 'Usthad Zainul Abideen',
-    capacity: 25,
-    roomNumber: 'Room 101',
+  console.log('📚 Creating Madrasa Institutions, Faculty & Students (Census)...');
+  // 1. Madrasa Institutions in this Mahallu
+  const m1 = await Madrasa.create({
+    name: 'Al-Noor Central Madrasa',
+    code: 'MDR-01',
+    regNumber: 'SKIMVB-412',
+    board: 'Samastha Kerala Islam Matha Vidyabhyasa Board',
+    location: 'Central Ward (Masjid Complex)',
+    establishedYear: 1988,
+    sadarUsthad: 'Usthad Zainul Abideen Faizy',
+    phone: '+91 9847111221',
+    email: 'alnoor.madrasa@mahallconnect.org',
+    timings: '06:30 AM – 08:30 AM',
+    status: 'ACTIVE',
+    description: 'Main central madrasa operating from 1st standard to 10th standard with comprehensive Islamic curriculum.',
   });
 
-  const cls2 = await MadrasaClass.create({
-    name: 'Class 3 - Tahfeez & Fiqh',
-    grade: 'Grade 3',
-    academicYear: '2026-2027',
-    teacherName: 'Usthad Abdul Basheer',
-    capacity: 25,
-    roomNumber: 'Room 102',
+  const m2 = await Madrasa.create({
+    name: 'Badrul Huda Branch Madrasa',
+    code: 'MDR-02',
+    regNumber: 'SKIMVB-680',
+    board: 'Samastha Kerala Islam Matha Vidyabhyasa Board',
+    location: 'North Ward (Badr Nagar)',
+    establishedYear: 2004,
+    sadarUsthad: 'Usthad K.V. Hamza Musliyar',
+    phone: '+91 9847111222',
+    email: 'badrulhuda@mahallconnect.org',
+    timings: '06:45 AM – 08:30 AM',
+    status: 'ACTIVE',
+    description: 'Ward branch madrasa catering to students from North Mahallu up to 7th standard.',
   });
 
-  const cls3 = await MadrasaClass.create({
-    name: 'Class 6 - Islamic History & Arabic',
-    grade: 'Grade 6',
+  const m3 = await Madrasa.create({
+    name: 'Darul Uloom Hifzul Quran Academy',
+    code: 'MDR-03',
+    regNumber: 'SKIMVB-915',
+    board: 'Samastha Kerala Islam Matha Vidyabhyasa Board',
+    location: 'West Ward (Madrasa Building 2)',
+    establishedYear: 2012,
+    sadarUsthad: 'Hafiz Anas Al-Qasimi',
+    phone: '+91 9847111223',
+    email: 'darululoom.hifz@mahallconnect.org',
+    timings: '05:30 AM – 08:00 AM & 04:30 PM - 06:30 PM',
+    status: 'ACTIVE',
+    description: 'Tahfeezul Quran & Tajweed Academy for full-time and part-time Hifz memorization.',
+  });
+
+  // 2. Madrasa Faculty (Usthads)
+  await MadrasaTeacher.create({
+    madrasaId: m1._id,
+    name: 'Usthad Zainul Abideen Faizy',
+    designation: 'Sadar Usthad (Headmaster)',
+    phone: '+91 9847111201',
+    email: 'zainul.abideen@mahallconnect.org',
+    qualification: 'Faizy, MA Arabic, Board Certified Headmaster',
+    subjects: ['Tafseer', 'Fiqh', 'Arabic Literature'],
+    joiningDate: new Date('2018-05-15'),
+    status: 'ACTIVE',
+  });
+
+  await MadrasaTeacher.create({
+    madrasaId: m1._id,
+    name: 'Usthad Abdul Basheer',
+    designation: 'Mudarris (Senior Teacher)',
+    phone: '+91 9847111202',
+    qualification: 'Aalim, Board Certified',
+    subjects: ['Hadees', 'Fiqh', 'Tajweed'],
+    joiningDate: new Date('2020-06-01'),
+    status: 'ACTIVE',
+  });
+
+  await MadrasaTeacher.create({
+    madrasaId: m1._id,
+    name: 'Usthad Farooq Faizy',
+    designation: 'Mudarris',
+    phone: '+91 9847111203',
+    qualification: 'Faizy, BA History',
+    subjects: ['Tareekh (Islamic History)', 'Akhlaq'],
+    joiningDate: new Date('2021-06-01'),
+    status: 'ACTIVE',
+  });
+
+  await MadrasaTeacher.create({
+    madrasaId: m2._id,
+    name: 'Usthad K.V. Hamza Musliyar',
+    designation: 'Sadar Usthad (Branch In-charge)',
+    phone: '+91 9847111204',
+    qualification: 'Musliyar, Board Senior Certified',
+    subjects: ['Quran', 'Fiqh', 'Dua & Adab'],
+    joiningDate: new Date('2019-06-01'),
+    status: 'ACTIVE',
+  });
+
+  await MadrasaTeacher.create({
+    madrasaId: m2._id,
+    name: 'Usthad Rasheed Saqafi',
+    designation: 'Mudarris',
+    phone: '+91 9847111205',
+    qualification: 'Saqafi, Afzal-ul-Ulama',
+    subjects: ['Aqeedah', 'Lisan-ul-Quran'],
+    joiningDate: new Date('2022-06-01'),
+    status: 'ACTIVE',
+  });
+
+  await MadrasaTeacher.create({
+    madrasaId: m3._id,
+    name: 'Hafiz Anas Al-Qasimi',
+    designation: 'Chief Tahfeez Instructor',
+    phone: '+91 9847111206',
+    qualification: 'Hafiz-e-Quran, Qasimi, Sanad in Hafs',
+    subjects: ['Hifz', 'Tajweed-e-Kabeer', 'Mutashabihat'],
+    joiningDate: new Date('2021-08-01'),
+    status: 'ACTIVE',
+  });
+
+  await MadrasaTeacher.create({
+    madrasaId: m3._id,
+    name: 'Qari Salman',
+    designation: 'Tajweed Specialist',
+    phone: '+91 9847111207',
+    qualification: 'Qari, Board Tajweed Master',
+    subjects: ['Qira’at', 'Makharij', 'Quran Recitation'],
+    joiningDate: new Date('2023-01-10'),
+    status: 'ACTIVE',
+  });
+
+  // 3. Madrasa Classes (Some Madrasas have up to 10th, some up to 12th)
+  console.log('🏫 Creating Madrasa Classes (Standard 1 to 10/12)...');
+  const class3A = await MadrasaClass.create({
+    madrasaId: m1._id,
+    name: 'Class 3 - A',
+    standard: 3,
+    division: 'A',
     academicYear: '2026-2027',
-    teacherName: 'Usthad Farooq Faizy',
-    capacity: 30,
-    roomNumber: 'Room 201',
+    usthadInCharge: 'Usthad Abdul Basheer',
+    roomNumber: 'Room 103',
+    maxCapacity: 30,
+    status: 'ACTIVE',
+  });
+
+  const class6B = await MadrasaClass.create({
+    madrasaId: m1._id,
+    name: 'Class 6 - B',
+    standard: 6,
+    division: 'B',
+    academicYear: '2026-2027',
+    usthadInCharge: 'Usthad Farooq Faizy',
+    roomNumber: 'Room 204',
+    maxCapacity: 35,
+    status: 'ACTIVE',
+  });
+
+  // Additional standards for Al-Noor Central Madrasa (1 to 10)
+  const remainingStandards = [1, 2, 4, 5, 7, 8, 9, 10];
+  for (const std of remainingStandards) {
+    await MadrasaClass.create({
+      madrasaId: m1._id,
+      name: `Class ${std} - A`,
+      standard: std,
+      division: 'A',
+      academicYear: '2026-2027',
+      usthadInCharge: std === 10 ? 'Usthad Zainul Abideen Faizy' : 'Usthad Mudarris Staff',
+      roomNumber: `Room ${std + 100}`,
+      maxCapacity: 35,
+      status: 'ACTIVE',
+    });
+  }
+
+  // Branch Madrasa Badrul Huda (1 to 7)
+  for (let std = 1; std <= 7; std++) {
+    await MadrasaClass.create({
+      madrasaId: m2._id,
+      name: `Class ${std}`,
+      standard: std,
+      division: 'A',
+      academicYear: '2026-2027',
+      usthadInCharge: 'Usthad K.V. Hamza Musliyar',
+      roomNumber: `Branch R-${std}`,
+      maxCapacity: 25,
+      status: 'ACTIVE',
+    });
+  }
+
+  // 4. Enrolled Madrasa Students
+  const maryam = await MadrasaStudent.create({
+    madrasaId: m1._id,
+    admissionNumber: 'MDR-2026-101',
+    name: 'Maryam Al-Rashid',
+    memberId: members[3]._id,
+    familyId: familyRashid._id,
+    classId: class3A._id,
+    standard: 3,
+    division: 'A',
+    rollNumber: '08',
+    dateOfBirth: new Date('2017-08-18'),
+    gender: 'FEMALE',
+    guardianName: 'Ahmed Al-Rashid',
+    guardianPhone: '+91 9847111001',
+    status: 'ACTIVE',
+  });
+
+  const zaid = await MadrasaStudent.create({
+    madrasaId: m1._id,
+    admissionNumber: 'MDR-2026-102',
+    name: 'Zaid Al-Rashid',
+    memberId: members[2]._id,
+    familyId: familyRashid._id,
+    classId: class6B._id,
+    standard: 6,
+    division: 'B',
+    rollNumber: '14',
+    dateOfBirth: new Date('2014-03-10'),
+    gender: 'MALE',
+    guardianName: 'Ahmed Al-Rashid',
+    guardianPhone: '+91 9847111001',
+    status: 'ACTIVE',
+  });
+
+  const bilal = await MadrasaStudent.create({
+    madrasaId: m1._id,
+    admissionNumber: 'MDR-2026-103',
+    name: 'Bilal Ba-Hammam',
+    memberId: members[8]._id,
+    familyId: familyHammam._id,
+    standard: 7,
+    division: 'A',
+    dateOfBirth: new Date('2011-12-05'),
+    gender: 'MALE',
+    guardianName: 'Ibrahim Ba-Hammam',
+    guardianPhone: '+91 9847111002',
+    status: 'ACTIVE',
   });
 
   await MadrasaStudent.create([
     {
-      admissionNumber: 'MDR-2026-101',
-      name: 'Maryam Al-Rashid',
-      memberId: members[3]._id,
+      madrasaId: m1._id,
+      admissionNumber: 'MDR-2026-104',
+      name: 'Fatima Al-Rashid',
       familyId: familyRashid._id,
-      classId: cls2._id,
-      dateOfBirth: new Date('2017-08-18'),
+      standard: 1,
+      division: 'A',
+      dateOfBirth: new Date('2019-04-12'),
       gender: 'FEMALE',
       guardianName: 'Ahmed Al-Rashid',
       guardianPhone: '+91 9847111001',
       status: 'ACTIVE',
     },
     {
-      admissionNumber: 'MDR-2026-102',
-      name: 'Zaid Al-Rashid',
-      memberId: members[2]._id,
-      familyId: familyRashid._id,
-      classId: cls3._id,
-      dateOfBirth: new Date('2014-03-10'),
-      gender: 'MALE',
-      guardianName: 'Ahmed Al-Rashid',
-      guardianPhone: '+91 9847111001',
-      status: 'ACTIVE',
-    },
-    {
-      admissionNumber: 'MDR-2026-103',
-      name: 'Bilal Ba-Hammam',
-      memberId: members[8]._id,
+      madrasaId: m2._id,
+      admissionNumber: 'MDR-2026-201',
+      name: 'Yusuf Hamza',
       familyId: familyHammam._id,
-      classId: cls3._id,
-      dateOfBirth: new Date('2011-12-05'),
+      standard: 2,
+      division: 'A',
+      dateOfBirth: new Date('2018-09-20'),
       gender: 'MALE',
       guardianName: 'Ibrahim Ba-Hammam',
       guardianPhone: '+91 9847111002',
+      status: 'ACTIVE',
+    },
+    {
+      madrasaId: m2._id,
+      admissionNumber: 'MDR-2026-202',
+      name: 'Aisha Siddiqa',
+      standard: 4,
+      division: 'A',
+      dateOfBirth: new Date('2016-02-14'),
+      gender: 'FEMALE',
+      guardianName: 'Mustafa K.P.',
+      guardianPhone: '+91 9847222333',
+      status: 'ACTIVE',
+    },
+    {
+      madrasaId: m3._id,
+      admissionNumber: 'MDR-2026-301',
+      name: 'Muhammed Rayan',
+      standard: 5,
+      dateOfBirth: new Date('2013-05-18'),
+      gender: 'MALE',
+      guardianName: 'Abdul Gafoor',
+      guardianPhone: '+91 9847333444',
+      status: 'ACTIVE',
+    },
+    {
+      madrasaId: m3._id,
+      admissionNumber: 'MDR-2026-302',
+      name: 'Ibrahim Khalil',
+      standard: 3,
+      dateOfBirth: new Date('2015-11-22'),
+      gender: 'MALE',
+      guardianName: 'Khalil Rahman',
+      guardianPhone: '+91 9847444555',
+      status: 'ACTIVE',
+    },
+  ]);
+
+  // 5. Class Timetables (Uploaded by Secretary)
+  console.log('📅 Uploading Class Timetables...');
+  await MadrasaTimetable.create({
+    madrasaId: m1._id,
+    classId: class3A._id,
+    className: 'Class 3 - A',
+    title: 'Class 3-A Standard Academic Timetable',
+    uploadedBy: 'Madrasa Secretary (Zubair Al-Katib)',
+    schedule: [
+      { day: 'Monday', periodNumber: 1, timeSlot: '06:30 AM – 07:10 AM', subject: 'Quran Recitation & Tajweed', usthadName: 'Usthad Abdul Basheer' },
+      { day: 'Monday', periodNumber: 2, timeSlot: '07:10 AM – 07:50 AM', subject: 'Fiqh (Basic Islamic Rules)', usthadName: 'Usthad Zainul Abideen Faizy' },
+      { day: 'Monday', periodNumber: 3, timeSlot: '07:50 AM – 08:30 AM', subject: 'Dua & Morning Adhkar', usthadName: 'Usthad Farooq Faizy' },
+
+      { day: 'Tuesday', periodNumber: 1, timeSlot: '06:30 AM – 07:10 AM', subject: 'Quran Recitation & Tajweed', usthadName: 'Usthad Abdul Basheer' },
+      { day: 'Tuesday', periodNumber: 2, timeSlot: '07:10 AM – 07:50 AM', subject: 'Aqeedah (Faith & Tawheed)', usthadName: 'Usthad Zainul Abideen Faizy' },
+      { day: 'Tuesday', periodNumber: 3, timeSlot: '07:50 AM – 08:30 AM', subject: 'Akhlaq & Islamic Manners', usthadName: 'Usthad Farooq Faizy' },
+
+      { day: 'Wednesday', periodNumber: 1, timeSlot: '06:30 AM – 07:10 AM', subject: 'Hifz Revision (Juz Amma)', usthadName: 'Usthad Abdul Basheer' },
+      { day: 'Wednesday', periodNumber: 2, timeSlot: '07:10 AM – 07:50 AM', subject: 'Thareekh (Seerah of Prophets)', usthadName: 'Usthad Farooq Faizy' },
+      { day: 'Wednesday', periodNumber: 3, timeSlot: '07:50 AM – 08:30 AM', subject: 'Lisan-ul-Quran (Arabic Basics)', usthadName: 'Usthad Zainul Abideen Faizy' },
+
+      { day: 'Thursday', periodNumber: 1, timeSlot: '06:30 AM – 07:10 AM', subject: 'Quran Recitation & Tajweed', usthadName: 'Usthad Abdul Basheer' },
+      { day: 'Thursday', periodNumber: 2, timeSlot: '07:10 AM – 07:50 AM', subject: 'Fiqh Practical (Wudu & Salah)', usthadName: 'Usthad Zainul Abideen Faizy' },
+      { day: 'Thursday', periodNumber: 3, timeSlot: '07:50 AM – 08:30 AM', subject: 'Islamic Songs & Speeches', usthadName: 'Usthad Farooq Faizy' },
+
+      { day: 'Saturday', periodNumber: 1, timeSlot: '06:30 AM – 07:10 AM', subject: 'Quran Examination Practice', usthadName: 'Usthad Abdul Basheer' },
+      { day: 'Saturday', periodNumber: 2, timeSlot: '07:10 AM – 07:50 AM', subject: 'Weekly Assessment', usthadName: 'Usthad Zainul Abideen Faizy' },
+      { day: 'Saturday', periodNumber: 3, timeSlot: '07:50 AM – 08:30 AM', subject: 'Moral Guidance & Story Hour', usthadName: 'Usthad Farooq Faizy' },
+
+      { day: 'Sunday', periodNumber: 1, timeSlot: '06:30 AM – 07:10 AM', subject: 'Tajweed Rules & Makharij', usthadName: 'Usthad Abdul Basheer' },
+      { day: 'Sunday', periodNumber: 2, timeSlot: '07:10 AM – 07:50 AM', subject: 'Arabic Writing', usthadName: 'Usthad Zainul Abideen Faizy' },
+      { day: 'Sunday', periodNumber: 3, timeSlot: '07:50 AM – 08:30 AM', subject: 'General Knowledge & Quiz', usthadName: 'Usthad Farooq Faizy' },
+    ],
+    notes: 'Students must carry their Samastha syllabus textbook and Amma Juz daily. Friday is weekly holiday.',
+    status: 'ACTIVE',
+  });
+
+  await MadrasaTimetable.create({
+    madrasaId: m1._id,
+    classId: class6B._id,
+    className: 'Class 6 - B',
+    title: 'Class 6-B Academic Timetable',
+    uploadedBy: 'Madrasa Secretary (Zubair Al-Katib)',
+    schedule: [
+      { day: 'Monday', periodNumber: 1, timeSlot: '06:30 AM – 07:10 AM', subject: 'Thafseer-ul-Quran', usthadName: 'Usthad Zainul Abideen Faizy' },
+      { day: 'Monday', periodNumber: 2, timeSlot: '07:10 AM – 07:50 AM', subject: 'Fiqh-ul-Islami', usthadName: 'Usthad Abdul Basheer' },
+      { day: 'Monday', periodNumber: 3, timeSlot: '07:50 AM – 08:30 AM', subject: 'Thareekh-e-Islam', usthadName: 'Usthad Farooq Faizy' },
+
+      { day: 'Tuesday', periodNumber: 1, timeSlot: '06:30 AM – 07:10 AM', subject: 'Hadees & Musthalah', usthadName: 'Usthad Zainul Abideen Faizy' },
+      { day: 'Tuesday', periodNumber: 2, timeSlot: '07:10 AM – 07:50 AM', subject: 'Aqeedath-ul-Muslimeen', usthadName: 'Usthad Farooq Faizy' },
+      { day: 'Tuesday', periodNumber: 3, timeSlot: '07:50 AM – 08:30 AM', subject: 'Arabic Grammar (Nahw & Sarf)', usthadName: 'Usthad Abdul Basheer' },
+
+      { day: 'Wednesday', periodNumber: 1, timeSlot: '06:30 AM – 07:10 AM', subject: 'Thafseer-ul-Quran', usthadName: 'Usthad Zainul Abideen Faizy' },
+      { day: 'Wednesday', periodNumber: 2, timeSlot: '07:10 AM – 07:50 AM', subject: 'Thareekh & Khilafath', usthadName: 'Usthad Farooq Faizy' },
+      { day: 'Wednesday', periodNumber: 3, timeSlot: '07:50 AM – 08:30 AM', subject: 'Akhlaq & Tasawwuf', usthadName: 'Usthad Abdul Basheer' },
+
+      { day: 'Thursday', periodNumber: 1, timeSlot: '06:30 AM – 07:10 AM', subject: 'Hadees Shareef', usthadName: 'Usthad Zainul Abideen Faizy' },
+      { day: 'Thursday', periodNumber: 2, timeSlot: '07:10 AM – 07:50 AM', subject: 'Fiqh Ahkam-us-Salah', usthadName: 'Usthad Abdul Basheer' },
+      { day: 'Thursday', periodNumber: 3, timeSlot: '07:50 AM – 08:30 AM', subject: 'Arabic Composition', usthadName: 'Usthad Farooq Faizy' },
+
+      { day: 'Saturday', periodNumber: 1, timeSlot: '06:30 AM – 07:10 AM', subject: 'Tajweed Mastery', usthadName: 'Usthad Abdul Basheer' },
+      { day: 'Saturday', periodNumber: 2, timeSlot: '07:10 AM – 07:50 AM', subject: 'Weekly Written Test', usthadName: 'Usthad Zainul Abideen Faizy' },
+      { day: 'Saturday', periodNumber: 3, timeSlot: '07:50 AM – 08:30 AM', subject: 'Debate & Public Speaking', usthadName: 'Usthad Farooq Faizy' },
+
+      { day: 'Sunday', periodNumber: 1, timeSlot: '06:30 AM – 07:10 AM', subject: 'Quran Hifz Revision', usthadName: 'Usthad Abdul Basheer' },
+      { day: 'Sunday', periodNumber: 2, timeSlot: '07:10 AM – 07:50 AM', subject: 'Fiqh Case Studies', usthadName: 'Usthad Zainul Abideen Faizy' },
+      { day: 'Sunday', periodNumber: 3, timeSlot: '07:50 AM – 08:30 AM', subject: 'Career & Islamic Ethics', usthadName: 'Usthad Farooq Faizy' },
+    ],
+    notes: 'Preparatory timetable for mid-term board assessment. Friday holiday.',
+    status: 'ACTIVE',
+  });
+
+  // 6. Exam Results (Entered by Madrasa Manager)
+  console.log('📝 Recording Madrasa Exam Results...');
+  await MadrasaExamResult.create({
+    madrasaId: m1._id,
+    studentId: maryam._id,
+    classId: class3A._id,
+    standard: 3,
+    examName: 'First Term Board Assessment 2026',
+    academicYear: '2026-2027',
+    examDate: new Date('2026-08-25'),
+    enteredBy: 'Madrasa Manager (Faizy Desk)',
+    subjects: [
+      { subject: 'Quran Recitation & Tajweed', maxMarks: 50, marksObtained: 48, grade: 'A+' },
+      { subject: 'Fiqh (Islamic Jurisprudence)', maxMarks: 50, marksObtained: 45, grade: 'A' },
+      { subject: 'Thareekh (Islamic History)', maxMarks: 50, marksObtained: 47, grade: 'A+' },
+      { subject: 'Akhlaq & Islamic Manners', maxMarks: 50, marksObtained: 50, grade: 'A+' },
+      { subject: 'Lisan-ul-Quran (Arabic)', maxMarks: 50, marksObtained: 44, grade: 'A' },
+    ],
+    totalMaxMarks: 250,
+    totalMarksObtained: 234,
+    percentage: 93.6,
+    overallGrade: 'A+ Distinction',
+    resultStatus: 'PASSED',
+    rank: 2,
+    remarks: 'MashaAllah, exceptional performance in Quran recitation and moral conduct. Top 2 in Class 3-A.',
+  });
+
+  await MadrasaExamResult.create({
+    madrasaId: m1._id,
+    studentId: zaid._id,
+    classId: class6B._id,
+    standard: 6,
+    examName: 'First Term Board Assessment 2026',
+    academicYear: '2026-2027',
+    examDate: new Date('2026-08-25'),
+    enteredBy: 'Madrasa Manager (Faizy Desk)',
+    subjects: [
+      { subject: 'Thafseer & Tajweed', maxMarks: 50, marksObtained: 46, grade: 'A' },
+      { subject: 'Fiqh-ul-Islami', maxMarks: 50, marksObtained: 42, grade: 'A' },
+      { subject: 'Hadees & Sunnah', maxMarks: 50, marksObtained: 44, grade: 'A' },
+      { subject: 'Thareekh-e-Islam', maxMarks: 50, marksObtained: 40, grade: 'B+' },
+      { subject: 'Arabic Grammar (Nahw)', maxMarks: 50, marksObtained: 39, grade: 'B' },
+    ],
+    totalMaxMarks: 250,
+    totalMarksObtained: 211,
+    percentage: 84.4,
+    overallGrade: 'A First Class',
+    resultStatus: 'PASSED',
+    rank: 5,
+    remarks: 'Very good understanding of Fiqh and Hadees. Usthad advises a bit more handwriting practice in Arabic.',
+  });
+
+  // 7. Monthly Student Fees & Fee Alert
+  console.log('💳 Generating Madrasa Monthly Fees & Fee Alerts...');
+  // Maryam: August PAID, September PENDING (Triggers Fee Alert for Parent!)
+  await MadrasaFee.create({
+    madrasaId: m1._id,
+    studentId: maryam._id,
+    familyId: familyRashid._id,
+    month: '2026-08',
+    amount: 200,
+    feeType: 'MONTHLY_TUITION',
+    dueDate: new Date('2026-08-10'),
+    paidDate: new Date('2026-08-05'),
+    status: 'PAID',
+    paymentMethod: 'UPI',
+    receiptNumber: 'MDR-2026-AUG-101',
+    notes: 'Paid on time via MahallConnect app.',
+  });
+
+  await MadrasaFee.create({
+    madrasaId: m1._id,
+    studentId: maryam._id,
+    familyId: familyRashid._id,
+    month: '2026-09',
+    amount: 200,
+    feeType: 'MONTHLY_TUITION',
+    dueDate: new Date('2026-09-30'),
+    status: 'PENDING',
+    notes: 'Monthly madrasa tuition fee pending.',
+  });
+
+  // Zaid: August PAID, September PAID
+  await MadrasaFee.create({
+    madrasaId: m1._id,
+    studentId: zaid._id,
+    familyId: familyRashid._id,
+    month: '2026-08',
+    amount: 200,
+    feeType: 'MONTHLY_TUITION',
+    dueDate: new Date('2026-08-10'),
+    paidDate: new Date('2026-08-05'),
+    status: 'PAID',
+    paymentMethod: 'UPI',
+    receiptNumber: 'MDR-2026-AUG-102',
+    notes: 'Paid via portal.',
+  });
+
+  await MadrasaFee.create({
+    madrasaId: m1._id,
+    studentId: zaid._id,
+    familyId: familyRashid._id,
+    month: '2026-09',
+    amount: 200,
+    feeType: 'MONTHLY_TUITION',
+    dueDate: new Date('2026-09-30'),
+    paidDate: new Date('2026-09-12'),
+    status: 'PAID',
+    paymentMethod: 'CASH',
+    receiptNumber: 'MDR-2026-SEP-102',
+    notes: 'Paid in office.',
+  });
+
+  // 8. Student Attendance Logs
+  console.log('📋 Logging Student Attendance...');
+  const pastDates = [
+    '2026-09-20', '2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24',
+    '2026-09-15', '2026-09-16', '2026-09-17', '2026-09-18', '2026-09-19',
+  ];
+  for (const dateStr of pastDates) {
+    await MadrasaAttendance.create({
+      madrasaId: m1._id,
+      studentId: maryam._id,
+      classId: class3A._id,
+      date: new Date(dateStr),
+      status: 'PRESENT',
+    });
+
+    await MadrasaAttendance.create({
+      madrasaId: m1._id,
+      studentId: zaid._id,
+      classId: class6B._id,
+      date: new Date(dateStr),
+      status: dateStr === '2026-09-18' ? 'ABSENT' : 'PRESENT',
+      remarks: dateStr === '2026-09-18' ? 'Medical leave requested by father' : undefined,
+    });
+  }
+
+  // 9. Official Madrasa Announcements for Parents/Students
+  console.log('📢 Publishing Official Madrasa Announcements...');
+  await MadrasaAnnouncement.create([
+    {
+      madrasaId: m1._id,
+      title: 'First Term Board Model Examinations Schedule Announced',
+      content: 'The Samastha SKIMVB First Term Examinations for Standards 1 through 10 will commence on October 12, 2026. Parents are requested to ensure regular morning attendance and homework revision.',
+      category: 'EXAM',
+      targetAudience: 'ALL',
+      classTarget: 'All Classes',
+      publishedBy: 'Sadar Usthad Zainul Abideen Faizy',
+      publishedAt: new Date('2026-09-20'),
+      priority: 'HIGH',
+      status: 'ACTIVE',
+    },
+    {
+      madrasaId: m1._id,
+      title: 'Annual Parent-Teacher Meeting (PTM) & Progress Report Card Distribution',
+      content: 'A general meeting for parents of students in Classes 1 to 10 is scheduled for next Saturday at 09:00 AM at the Madrasa Auditorium. Mark sheets and teacher feedback will be handed over.',
+      category: 'PARENT_MEETING',
+      targetAudience: 'PARENTS',
+      classTarget: 'All Classes',
+      publishedBy: 'Madrasa Secretary (Zubair Al-Katib)',
+      publishedAt: new Date('2026-09-22'),
+      priority: 'HIGH',
+      status: 'ACTIVE',
+    },
+    {
+      madrasaId: m1._id,
+      title: 'Monthly Student Fee Reminder for September 2026',
+      content: 'Respected parents: Monthly madrasa education fee for September is due on September 30. You can pay conveniently through the MahallConnect Member Portal or directly at the Madrasa office.',
+      category: 'FEE_ALERT',
+      targetAudience: 'PARENTS',
+      classTarget: 'All Classes',
+      publishedBy: 'Madrasa Desk',
+      publishedAt: new Date('2026-09-23'),
+      priority: 'MEDIUM',
       status: 'ACTIVE',
     },
   ]);

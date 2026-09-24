@@ -15,6 +15,7 @@ const expense_model_js_1 = require("../modules/finance/expense.model.js");
 const application_model_js_1 = require("../modules/applications/application.model.js");
 const applicationHistory_model_js_1 = require("../modules/applications/applicationHistory.model.js");
 const madrasa_model_js_1 = require("../modules/madrasa/madrasa.model.js");
+const madrasa_extra_model_js_1 = require("../modules/madrasa/madrasa.extra.model.js");
 const mosque_model_js_1 = require("../modules/mosque/mosque.model.js");
 const event_model_js_1 = require("../modules/events/event.model.js");
 const volunteer_model_js_1 = require("../modules/volunteers/volunteer.model.js");
@@ -42,8 +43,9 @@ const seedDatabase = async () => {
         expense_model_js_1.Expense.deleteMany({}),
         application_model_js_1.Application.deleteMany({}),
         applicationHistory_model_js_1.ApplicationHistory.deleteMany({}),
-        madrasa_model_js_1.MadrasaClass.deleteMany({}),
+        madrasa_model_js_1.Madrasa.deleteMany({}),
         madrasa_model_js_1.MadrasaStudent.deleteMany({}),
+        madrasa_extra_model_js_1.MadrasaTeacher.deleteMany({}),
         mosque_model_js_1.Mosque.deleteMany({}),
         event_model_js_1.Event.deleteMany({}),
         volunteer_model_js_1.Volunteer.deleteMany({}),
@@ -455,38 +457,130 @@ const seedDatabase = async () => {
             timestamp: new Date(),
         },
     ]);
-    console.log('📚 Creating Madrasa Classes & Students...');
-    const cls1 = await madrasa_model_js_1.MadrasaClass.create({
-        name: 'Class 1 - Al-Mubtadi (Beginners)',
-        grade: 'Grade 1',
-        academicYear: '2026-2027',
-        teacherName: 'Usthad Zainul Abideen',
-        capacity: 25,
-        roomNumber: 'Room 101',
+    console.log('📚 Creating Madrasa Institutions, Faculty & Students (Census)...');
+    // 1. Madrasa Institutions in this Mahallu
+    const m1 = await madrasa_model_js_1.Madrasa.create({
+        name: 'Al-Noor Central Madrasa',
+        code: 'MDR-01',
+        regNumber: 'SKIMVB-412',
+        board: 'Samastha Kerala Islam Matha Vidyabhyasa Board',
+        location: 'Central Ward (Masjid Complex)',
+        establishedYear: 1988,
+        sadarUsthad: 'Usthad Zainul Abideen Faizy',
+        phone: '+91 9847111221',
+        email: 'alnoor.madrasa@mahallconnect.org',
+        timings: '06:30 AM – 08:30 AM',
+        status: 'ACTIVE',
+        description: 'Main central madrasa operating from 1st standard to 10th standard with comprehensive Islamic curriculum.',
     });
-    const cls2 = await madrasa_model_js_1.MadrasaClass.create({
-        name: 'Class 3 - Tahfeez & Fiqh',
-        grade: 'Grade 3',
-        academicYear: '2026-2027',
-        teacherName: 'Usthad Abdul Basheer',
-        capacity: 25,
-        roomNumber: 'Room 102',
+    const m2 = await madrasa_model_js_1.Madrasa.create({
+        name: 'Badrul Huda Branch Madrasa',
+        code: 'MDR-02',
+        regNumber: 'SKIMVB-680',
+        board: 'Samastha Kerala Islam Matha Vidyabhyasa Board',
+        location: 'North Ward (Badr Nagar)',
+        establishedYear: 2004,
+        sadarUsthad: 'Usthad K.V. Hamza Musliyar',
+        phone: '+91 9847111222',
+        email: 'badrulhuda@mahallconnect.org',
+        timings: '06:45 AM – 08:30 AM',
+        status: 'ACTIVE',
+        description: 'Ward branch madrasa catering to students from North Mahallu up to 7th standard.',
     });
-    const cls3 = await madrasa_model_js_1.MadrasaClass.create({
-        name: 'Class 6 - Islamic History & Arabic',
-        grade: 'Grade 6',
-        academicYear: '2026-2027',
-        teacherName: 'Usthad Farooq Faizy',
-        capacity: 30,
-        roomNumber: 'Room 201',
+    const m3 = await madrasa_model_js_1.Madrasa.create({
+        name: 'Darul Uloom Hifzul Quran Academy',
+        code: 'MDR-03',
+        regNumber: 'SKIMVB-915',
+        board: 'Samastha Kerala Islam Matha Vidyabhyasa Board',
+        location: 'West Ward (Madrasa Building 2)',
+        establishedYear: 2012,
+        sadarUsthad: 'Hafiz Anas Al-Qasimi',
+        phone: '+91 9847111223',
+        email: 'darululoom.hifz@mahallconnect.org',
+        timings: '05:30 AM – 08:00 AM & 04:30 PM - 06:30 PM',
+        status: 'ACTIVE',
+        description: 'Tahfeezul Quran & Tajweed Academy for full-time and part-time Hifz memorization.',
     });
+    // 2. Madrasa Faculty (Usthads)
+    await madrasa_extra_model_js_1.MadrasaTeacher.create({
+        madrasaId: m1._id,
+        name: 'Usthad Zainul Abideen Faizy',
+        designation: 'Sadar Usthad (Headmaster)',
+        phone: '+91 9847111201',
+        email: 'zainul.abideen@mahallconnect.org',
+        qualification: 'Faizy, MA Arabic, Board Certified Headmaster',
+        subjects: ['Tafseer', 'Fiqh', 'Arabic Literature'],
+        joiningDate: new Date('2018-05-15'),
+        status: 'ACTIVE',
+    });
+    await madrasa_extra_model_js_1.MadrasaTeacher.create({
+        madrasaId: m1._id,
+        name: 'Usthad Abdul Basheer',
+        designation: 'Mudarris (Senior Teacher)',
+        phone: '+91 9847111202',
+        qualification: 'Aalim, Board Certified',
+        subjects: ['Hadees', 'Fiqh', 'Tajweed'],
+        joiningDate: new Date('2020-06-01'),
+        status: 'ACTIVE',
+    });
+    await madrasa_extra_model_js_1.MadrasaTeacher.create({
+        madrasaId: m1._id,
+        name: 'Usthad Farooq Faizy',
+        designation: 'Mudarris',
+        phone: '+91 9847111203',
+        qualification: 'Faizy, BA History',
+        subjects: ['Tareekh (Islamic History)', 'Akhlaq'],
+        joiningDate: new Date('2021-06-01'),
+        status: 'ACTIVE',
+    });
+    await madrasa_extra_model_js_1.MadrasaTeacher.create({
+        madrasaId: m2._id,
+        name: 'Usthad K.V. Hamza Musliyar',
+        designation: 'Sadar Usthad (Branch In-charge)',
+        phone: '+91 9847111204',
+        qualification: 'Musliyar, Board Senior Certified',
+        subjects: ['Quran', 'Fiqh', 'Dua & Adab'],
+        joiningDate: new Date('2019-06-01'),
+        status: 'ACTIVE',
+    });
+    await madrasa_extra_model_js_1.MadrasaTeacher.create({
+        madrasaId: m2._id,
+        name: 'Usthad Rasheed Saqafi',
+        designation: 'Mudarris',
+        phone: '+91 9847111205',
+        qualification: 'Saqafi, Afzal-ul-Ulama',
+        subjects: ['Aqeedah', 'Lisan-ul-Quran'],
+        joiningDate: new Date('2022-06-01'),
+        status: 'ACTIVE',
+    });
+    await madrasa_extra_model_js_1.MadrasaTeacher.create({
+        madrasaId: m3._id,
+        name: 'Hafiz Anas Al-Qasimi',
+        designation: 'Chief Tahfeez Instructor',
+        phone: '+91 9847111206',
+        qualification: 'Hafiz-e-Quran, Qasimi, Sanad in Hafs',
+        subjects: ['Hifz', 'Tajweed-e-Kabeer', 'Mutashabihat'],
+        joiningDate: new Date('2021-08-01'),
+        status: 'ACTIVE',
+    });
+    await madrasa_extra_model_js_1.MadrasaTeacher.create({
+        madrasaId: m3._id,
+        name: 'Qari Salman',
+        designation: 'Tajweed Specialist',
+        phone: '+91 9847111207',
+        qualification: 'Qari, Board Tajweed Master',
+        subjects: ['Qira’at', 'Makharij', 'Quran Recitation'],
+        joiningDate: new Date('2023-01-10'),
+        status: 'ACTIVE',
+    });
+    // 3. Enrolled Madrasa Students
     await madrasa_model_js_1.MadrasaStudent.create([
         {
+            madrasaId: m1._id,
             admissionNumber: 'MDR-2026-101',
             name: 'Maryam Al-Rashid',
             memberId: members[3]._id,
             familyId: familyRashid._id,
-            classId: cls2._id,
             dateOfBirth: new Date('2017-08-18'),
             gender: 'FEMALE',
             guardianName: 'Ahmed Al-Rashid',
@@ -494,11 +588,11 @@ const seedDatabase = async () => {
             status: 'ACTIVE',
         },
         {
+            madrasaId: m1._id,
             admissionNumber: 'MDR-2026-102',
             name: 'Zaid Al-Rashid',
             memberId: members[2]._id,
             familyId: familyRashid._id,
-            classId: cls3._id,
             dateOfBirth: new Date('2014-03-10'),
             gender: 'MALE',
             guardianName: 'Ahmed Al-Rashid',
@@ -506,15 +600,67 @@ const seedDatabase = async () => {
             status: 'ACTIVE',
         },
         {
+            madrasaId: m1._id,
             admissionNumber: 'MDR-2026-103',
             name: 'Bilal Ba-Hammam',
             memberId: members[8]._id,
             familyId: familyHammam._id,
-            classId: cls3._id,
             dateOfBirth: new Date('2011-12-05'),
             gender: 'MALE',
             guardianName: 'Ibrahim Ba-Hammam',
             guardianPhone: '+91 9847111002',
+            status: 'ACTIVE',
+        },
+        {
+            madrasaId: m1._id,
+            admissionNumber: 'MDR-2026-104',
+            name: 'Fatima Al-Rashid',
+            familyId: familyRashid._id,
+            dateOfBirth: new Date('2019-04-12'),
+            gender: 'FEMALE',
+            guardianName: 'Ahmed Al-Rashid',
+            guardianPhone: '+91 9847111001',
+            status: 'ACTIVE',
+        },
+        {
+            madrasaId: m2._id,
+            admissionNumber: 'MDR-2026-201',
+            name: 'Yusuf Hamza',
+            familyId: familyHammam._id,
+            dateOfBirth: new Date('2018-09-20'),
+            gender: 'MALE',
+            guardianName: 'Ibrahim Ba-Hammam',
+            guardianPhone: '+91 9847111002',
+            status: 'ACTIVE',
+        },
+        {
+            madrasaId: m2._id,
+            admissionNumber: 'MDR-2026-202',
+            name: 'Aisha Siddiqa',
+            dateOfBirth: new Date('2016-02-14'),
+            gender: 'FEMALE',
+            guardianName: 'Mustafa K.P.',
+            guardianPhone: '+91 9847222333',
+            status: 'ACTIVE',
+        },
+        {
+            madrasaId: m3._id,
+            admissionNumber: 'MDR-2026-301',
+            name: 'Muhammed Rayan',
+            dateOfBirth: new Date('2013-05-18'),
+            gender: 'MALE',
+            guardianName: 'Abdul Gafoor',
+            guardianPhone: '+91 9847333444',
+            status: 'ACTIVE',
+        },
+        {
+            madrasaId: m3._id,
+            admissionNumber: 'MDR-2026-302',
+            name: 'Ibrahim Khalil',
+            dateOfBirth: new Date('2015-11-22'),
+            gender: 'MALE',
+            guardianName: 'Khalil Rahman',
+            guardianPhone: '+91 9847444555',
             status: 'ACTIVE',
         },
     ]);

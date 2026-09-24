@@ -33,49 +33,17 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MadrasaResult = exports.MadrasaExam = exports.MadrasaAttendance = exports.MadrasaTeacher = void 0;
+exports.MadrasaTeacher = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const madrasaTeacherSchema = new mongoose_1.Schema({
+    madrasaId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Madrasa', index: true },
     name: { type: String, required: true, trim: true },
+    designation: { type: String, default: 'Mudarris (Usthad)', trim: true },
     phone: { type: String, required: true },
     email: { type: String },
     qualification: { type: String, required: true },
     subjects: [{ type: String }],
-    assignedClass: { type: mongoose_1.Schema.Types.ObjectId, ref: 'MadrasaClass' },
     joiningDate: { type: Date, default: Date.now },
     status: { type: String, enum: ['ACTIVE', 'INACTIVE'], default: 'ACTIVE', index: true },
 }, { timestamps: true });
 exports.MadrasaTeacher = mongoose_1.default.model('MadrasaTeacher', madrasaTeacherSchema);
-const madrasaAttendanceSchema = new mongoose_1.Schema({
-    classId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'MadrasaClass', required: true, index: true },
-    date: { type: Date, required: true, index: true },
-    records: [
-        {
-            studentId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'MadrasaStudent', required: true },
-            present: { type: Boolean, required: true },
-            note: { type: String },
-        },
-    ],
-    recordedBy: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User' },
-}, { timestamps: true });
-exports.MadrasaAttendance = mongoose_1.default.model('MadrasaAttendance', madrasaAttendanceSchema);
-const madrasaExamSchema = new mongoose_1.Schema({
-    title: { type: String, required: true },
-    classId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'MadrasaClass', required: true, index: true },
-    subject: { type: String, required: true },
-    examDate: { type: Date, required: true },
-    totalMarks: { type: Number, required: true, default: 100 },
-    passingMarks: { type: Number, required: true, default: 40 },
-    type: { type: String, enum: ['MONTHLY', 'MIDTERM', 'FINAL', 'UNIT_TEST'], default: 'MONTHLY' },
-}, { timestamps: true });
-exports.MadrasaExam = mongoose_1.default.model('MadrasaExam', madrasaExamSchema);
-const madrasaResultSchema = new mongoose_1.Schema({
-    examId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'MadrasaExam', required: true, index: true },
-    studentId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'MadrasaStudent', required: true },
-    marksObtained: { type: Number, required: true },
-    totalMarks: { type: Number, required: true },
-    grade: { type: String },
-    passed: { type: Boolean, default: false },
-    remarks: { type: String },
-}, { timestamps: true });
-exports.MadrasaResult = mongoose_1.default.model('MadrasaResult', madrasaResultSchema);

@@ -14,12 +14,13 @@ const envSchema = z.object({
   SERVER_URL: z.string().default('http://localhost:5000'),
   GOOGLE_CLIENT_ID: z.string().optional().default(''),
   GOOGLE_CLIENT_SECRET: z.string().optional().default(''),
-  SMTP_HOST: z.string().optional().default(''),
-  SMTP_PORT: z.string().default('587').transform(Number),
-  SMTP_USER: z.string().optional().default(''),
+  SMTP_HOST: z.string().optional().default('smtp.gmail.com'),
+  SMTP_PORT: z.string().default('465').transform(Number),
+  SMTP_USER: z.string().optional().default('teemdiwani@gmail.com'),
   SMTP_PASS: z.string().optional().default(''),
-  SMTP_SECURE: z.string().optional().default('false').transform(val => val === 'true'),
-  SMTP_FROM: z.string().optional().default('Mahallu Office <noreply@mahallu.org>'),
+  GMAIL_APP_PASSWORD: z.string().optional().default(''),
+  SMTP_SECURE: z.string().optional().default('true').transform(val => val === 'true'),
+  SMTP_FROM: z.string().optional().default('MahallConnect <teemdiwani@gmail.com>'),
 });
 
 const parsed = envSchema.safeParse(process.env);

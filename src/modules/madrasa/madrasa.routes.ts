@@ -8,33 +8,61 @@ const router = Router();
 
 router.use(authenticate);
 
-// Dashboard
+// ─── Parent Portal (Accessible to Parents / Members) ─────────────────────────
+router.get('/parent-portal', MadrasaController.getParentPortal);
+
+// ─── Desk Dashboard ─────────────────────────────────────────────────────────
 router.get('/dashboard', requirePermission(PERMISSIONS.MADRASA_MANAGE), MadrasaController.getDashboard);
 
-// Classes
+// ─── Madrasa Institutions ───────────────────────────────────────────────────
+router.get('/madrasas', MadrasaController.listMadrasas);
+router.get('/madrasas/:id', MadrasaController.getMadrasaById);
+router.post('/madrasas', requirePermission(PERMISSIONS.MADRASA_MANAGE), MadrasaController.createMadrasa);
+router.patch('/madrasas/:id', requirePermission(PERMISSIONS.MADRASA_MANAGE), MadrasaController.updateMadrasa);
+router.delete('/madrasas/:id', requirePermission(PERMISSIONS.MADRASA_MANAGE), MadrasaController.deleteMadrasa);
+
+// ─── Classes (1-10 or 1-12 Standards) ───────────────────────────────────────
 router.get('/classes', MadrasaController.listClasses);
 router.post('/classes', requirePermission(PERMISSIONS.MADRASA_MANAGE), MadrasaController.createClass);
 router.patch('/classes/:id', requirePermission(PERMISSIONS.MADRASA_MANAGE), MadrasaController.updateClass);
 router.delete('/classes/:id', requirePermission(PERMISSIONS.MADRASA_MANAGE), MadrasaController.deleteClass);
 
-// Students
+// ─── Timetables (Secretary Uploads & Manages Class-wise) ─────────────────────
+router.get('/timetables', MadrasaController.listTimetables);
+router.get('/timetables/class/:classId', MadrasaController.getTimetableByClass);
+router.post('/timetables', requirePermission(PERMISSIONS.MADRASA_MANAGE), MadrasaController.saveTimetable);
+router.delete('/timetables/:id', requirePermission(PERMISSIONS.MADRASA_MANAGE), MadrasaController.deleteTimetable);
+
+// ─── Exam Results (Entered by Madrasa Manager) ──────────────────────────────
+router.get('/results', MadrasaController.listResults);
+router.post('/results', requirePermission(PERMISSIONS.MADRASA_GRADES), MadrasaController.createResult);
+router.patch('/results/:id', requirePermission(PERMISSIONS.MADRASA_GRADES), MadrasaController.updateResult);
+router.delete('/results/:id', requirePermission(PERMISSIONS.MADRASA_GRADES), MadrasaController.deleteResult);
+
+// ─── Monthly Student Fees & Fee Alerts ───────────────────────────────────────
+router.get('/fees', MadrasaController.listFees);
+router.post('/fees', requirePermission(PERMISSIONS.MADRASA_MANAGE), MadrasaController.recordFeePayment);
+router.patch('/fees/:id', requirePermission(PERMISSIONS.MADRASA_MANAGE), MadrasaController.updateFeeStatus);
+
+// ─── Student Attendance ─────────────────────────────────────────────────────
+router.get('/attendance', MadrasaController.listAttendance);
+router.post('/attendance', requirePermission(PERMISSIONS.MADRASA_ATTENDANCE), MadrasaController.recordAttendance);
+
+// ─── Official Madrasa Announcements (Parent / Student Notices) ───────────────
+router.get('/announcements', MadrasaController.listAnnouncements);
+router.post('/announcements', requirePermission(PERMISSIONS.MADRASA_MANAGE), MadrasaController.createAnnouncement);
+router.delete('/announcements/:id', requirePermission(PERMISSIONS.MADRASA_MANAGE), MadrasaController.deleteAnnouncement);
+
+// ─── Students Roster ─────────────────────────────────────────────────────────
 router.get('/students', MadrasaController.listStudents);
 router.post('/students', requirePermission(PERMISSIONS.MADRASA_MANAGE), MadrasaController.createStudent);
 router.patch('/students/:id', requirePermission(PERMISSIONS.MADRASA_MANAGE), MadrasaController.updateStudent);
+router.delete('/students/:id', requirePermission(PERMISSIONS.MADRASA_MANAGE), MadrasaController.deleteStudent);
 
-// Teachers (stored on MadrasaClass.teacherName — virtual teacher directory)
+// ─── Usthad Faculty ─────────────────────────────────────────────────────────
 router.get('/teachers', MadrasaController.listTeachers);
 router.post('/teachers', requirePermission(PERMISSIONS.MADRASA_MANAGE), MadrasaController.createTeacher);
 router.patch('/teachers/:id', requirePermission(PERMISSIONS.MADRASA_MANAGE), MadrasaController.updateTeacher);
-
-// Attendance
-router.get('/attendance', requirePermission(PERMISSIONS.MADRASA_ATTENDANCE), MadrasaController.listAttendance);
-router.post('/attendance', requirePermission(PERMISSIONS.MADRASA_ATTENDANCE), MadrasaController.recordAttendance);
-
-// Exams & Results
-router.get('/exams', MadrasaController.listExams);
-router.post('/exams', requirePermission(PERMISSIONS.MADRASA_GRADES), MadrasaController.createExam);
-router.post('/exams/:id/results', requirePermission(PERMISSIONS.MADRASA_GRADES), MadrasaController.recordResults);
-router.get('/exams/:id/results', MadrasaController.getResults);
+router.delete('/teachers/:id', requirePermission(PERMISSIONS.MADRASA_MANAGE), MadrasaController.deleteTeacher);
 
 export default router;
