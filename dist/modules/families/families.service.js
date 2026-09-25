@@ -128,26 +128,48 @@ class FamiliesService {
             memberCount: members.length,
         };
     }
-    static async getMyFamily(userIdOrMemberId) {
-        const member = await member_model_js_1.Member.findOne({
-            $or: [
-                { _id: mongoose_1.default.isValidObjectId(userIdOrMemberId) ? userIdOrMemberId : undefined },
-                { userId: mongoose_1.default.isValidObjectId(userIdOrMemberId) ? userIdOrMemberId : undefined },
-            ].filter(Boolean),
+    static async getMyFamily(userIdOrMemberId, email, phone, searchNumber) {
+        // 1. First attempt flexible matching across all members' phone numbers, emails, and codes
+        const { findFamilyAndMemberForUser } = await import('../../utils/memberMatcher.js');
+        const match = await findFamilyAndMemberForUser({
+            userId: userIdOrMemberId,
+            email,
+            phone,
+            searchNumber,
         });
-        if (!member || !member.familyId) {
-            throw apiError_js_1.ApiError.notFound('No family linked to this user/member');
+        if (match.family) {
+            const headMemberId = match.family.familyHead?._id?.toString() || match.family.familyHead?.toString();
+            const currentMemberId = match.currentMember?._id?.toString();
+            const isFamilyHead = Boolean((headMemberId && headMemberId === currentMemberId) ||
+                (currentMemberId && match.familyMembers.some((m) => m.isFamilyHead && m._id?.toString() === currentMemberId)));
+            const myRel = (currentMemberId && match.familyMembers.find((m) => m._id?.toString() === currentMemberId)?.relationship) || 'MEMBER';
+            return {
+                family: match.family,
+                familyHead: match.familyHead,
+                members: match.familyMembers,
+                memberCount: match.familyMembersCount,
+                isFamilyHead,
+                myRelationship: myRel,
+                currentMember: match.currentMember,
+            };
         }
-        const details = await this.getFamilyById(member.familyId.toString());
-        const headMemberId = details.family.familyHead?._id?.toString() || details.family.familyHead?.toString();
-        const isFamilyHead = headMemberId === member._id.toString() || details.members.some(m => m.isFamilyHead && m._id.toString() === member._id.toString());
-        const myRel = details.members.find(m => m._id.toString() === member._id.toString())?.relationship || 'MEMBER';
-        return {
-            ...details,
-            isFamilyHead,
-            myRelationship: myRel,
-            currentMember: member,
-        };
+        // 2. Fallback to direct Member ID lookup if provided
+        if (mongoose_1.default.isValidObjectId(userIdOrMemberId)) {
+            const member = await member_model_js_1.Member.findById(userIdOrMemberId);
+            if (member?.familyId) {
+                const details = await this.getFamilyById(member.familyId.toString());
+                const headMemberId = details.family.familyHead?._id?.toString() || details.family.familyHead?.toString();
+                const isFamilyHead = headMemberId === member._id.toString() || details.members.some((m) => m.isFamilyHead && m._id.toString() === member._id.toString());
+                const myRel = details.members.find((m) => m._id.toString() === member._id.toString())?.relationship || 'MEMBER';
+                return {
+                    ...details,
+                    isFamilyHead,
+                    myRelationship: myRel,
+                    currentMember: member,
+                };
+            }
+        }
+        throw apiError_js_1.ApiError.notFound('No family linked to this user/member');
     }
     static async createFamily(data) {
         let code = data.familyCode?.trim();

@@ -15,6 +15,7 @@ router.get('/charts', requireRole(ROLES.SUPER_ADMIN, ROLES.SECRETARY, ROLES.TREA
 
 // Member Dashboard - All authenticated members
 router.get('/member', DashboardController.getMemberDashboard);
+router.post('/member/link-family', DashboardController.linkFamilyByPhone);
 
 // Treasurer Dashboard
 router.get('/treasurer', requireRole(ROLES.SUPER_ADMIN, ROLES.TREASURER), DashboardController.getTreasurerDashboard);

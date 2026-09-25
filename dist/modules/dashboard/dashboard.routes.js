@@ -13,6 +13,7 @@ router.get('/stats', (0, authorize_js_1.requireRole)(roles_js_1.ROLES.SUPER_ADMI
 router.get('/charts', (0, authorize_js_1.requireRole)(roles_js_1.ROLES.SUPER_ADMIN, roles_js_1.ROLES.SECRETARY, roles_js_1.ROLES.TREASURER), dashboard_controller_js_1.DashboardController.getDashboardCharts);
 // Member Dashboard - All authenticated members
 router.get('/member', dashboard_controller_js_1.DashboardController.getMemberDashboard);
+router.post('/member/link-family', dashboard_controller_js_1.DashboardController.linkFamilyByPhone);
 // Treasurer Dashboard
 router.get('/treasurer', (0, authorize_js_1.requireRole)(roles_js_1.ROLES.SUPER_ADMIN, roles_js_1.ROLES.TREASURER), dashboard_controller_js_1.DashboardController.getTreasurerDashboard);
 // Secretary Dashboard

@@ -59,6 +59,14 @@ const userSchema = new mongoose_1.Schema({
         type: String,
         select: false,
     },
+    passwordResetOtp: {
+        type: String,
+        select: false,
+    },
+    passwordResetExpires: {
+        type: Date,
+        select: false,
+    },
     googleId: {
         type: String,
         unique: true,

@@ -18,7 +18,13 @@ export class FamiliesController {
 
   static async getMyFamily(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await FamiliesService.getMyFamily(req.user!._id.toString());
+      const searchNumber = (req.query.number as string) || (req.query.phone as string) || undefined;
+      const result = await FamiliesService.getMyFamily(
+        req.user!._id.toString(),
+        req.user!.email,
+        req.user!.phone,
+        searchNumber
+      );
       return ApiResponse.success(res, result);
     } catch (error) {
       next(error);
@@ -39,10 +45,14 @@ export class FamiliesController {
       ].map((r) => r.toUpperCase()).includes(roleUpper);
 
       if (!isAdminStaff) {
-        const member = await Member.findOne({
-          $or: [{ userId: req.user!._id }, { email: req.user!.email }],
+        const { findFamilyAndMemberForUser } = await import('../../utils/memberMatcher.js');
+        const match = await findFamilyAndMemberForUser({
+          userId: req.user!._id.toString(),
+          email: req.user!.email,
+          phone: req.user!.phone,
         });
-        if (!member || member.familyId?.toString() !== req.params.id) {
+
+        if (!match.family || match.family._id.toString() !== req.params.id) {
           throw ApiError.forbidden('You are not authorized to view this family record');
         }
       }

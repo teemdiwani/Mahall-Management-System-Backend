@@ -14,6 +14,8 @@ export interface IPayment extends Document {
   verifiedBy?: mongoose.Types.ObjectId;
   notes?: string;
   paidAt?: Date;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -80,6 +82,14 @@ const paymentSchema = new Schema<IPayment>(
     },
     paidAt: {
       type: Date,
+    },
+    razorpayOrderId: {
+      type: String,
+      index: true,
+    },
+    razorpayPaymentId: {
+      type: String,
+      index: true,
     },
   },
   {

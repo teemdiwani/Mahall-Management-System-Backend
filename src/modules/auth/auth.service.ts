@@ -165,16 +165,16 @@ export class AuthService {
       throw ApiError.notFound('User account not found');
     }
 
-    // Find linked member record
-    const member = await Member.findOne({
-      $or: [{ userId: user._id }, { email: user.email }],
+    // Find linked member & family using unified matcher
+    const { findFamilyAndMemberForUser } = await import('../../utils/memberMatcher.js');
+    const match = await findFamilyAndMemberForUser({
+      userId: user._id.toString(),
+      email: user.email,
+      phone: user.phone,
     });
 
-    // Find linked family record
-    let family = null;
-    if (member && member.familyId) {
-      family = await Family.findById(member.familyId);
-    }
+    const member = match.currentMember;
+    const family = match.family;
 
     const defaultPerms = ROLE_PERMISSIONS[user.role] || [];
     const permissions = Array.from(

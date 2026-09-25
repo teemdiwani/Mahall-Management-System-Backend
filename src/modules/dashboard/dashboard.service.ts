@@ -197,26 +197,42 @@ export class DashboardService {
     return adminData.charts;
   }
 
-  static async getMemberDashboard(userId: string, email?: string) {
+  static async getMemberDashboard(
+    userId: string,
+    email?: string,
+    phone?: string,
+    searchNumber?: string
+  ) {
     const currentMonth = new Date().toISOString().slice(0, 7);
-    const member = await Member.findOne({
-      $or: [
-        { userId },
-        ...(email ? [{ email: email.toLowerCase() }] : []),
-      ],
-    });
-    let family = null;
-    let familyMembers: any[] = [];
-    let myPayments: any[] = [];
-    let myApplications: any[] = [];
 
-    if (member && member.familyId) {
-      family = await Family.findById(member.familyId);
-      familyMembers = await Member.find({ familyId: member.familyId });
-      myPayments = await Payment.find({ familyId: member.familyId }).sort({ createdAt: -1 }).limit(5);
+    // Dynamic import to prevent circular dependency
+    const { findFamilyAndMemberForUser } = await import('../../utils/memberMatcher.js');
+
+    // Flexible matching: matches user credentials, ANY member's phone number, or family phone/code
+    const match = await findFamilyAndMemberForUser({
+      userId,
+      email,
+      phone,
+      searchNumber,
+    });
+
+    const member = match.currentMember;
+    const family = match.family;
+    const familyHead = match.familyHead;
+    const familyMembers = match.familyMembers;
+    const familyMembersCount = match.familyMembersCount;
+
+    let myPayments: any[] = [];
+    if (family?._id) {
+      myPayments = await Payment.find({ familyId: family._id }).sort({ createdAt: -1 }).limit(5);
     }
 
-    myApplications = await Application.find({ applicant: userId }).sort({ createdAt: -1 }).limit(5);
+    const myApplications = await Application.find({
+      $or: [
+        { applicant: userId },
+        ...(family?._id ? [{ familyId: family._id }] : []),
+      ],
+    }).sort({ createdAt: -1 }).limit(5);
 
     const mosque = await Mosque.findOne();
     const announcements = await Announcement.find({
@@ -235,7 +251,7 @@ export class DashboardService {
       (p) => p.month === currentMonth && p.type === 'MONTHLY' && p.status === 'PAID'
     );
 
-    const madrasaParentPortal = await MadrasaService.getParentPortal(userId, email).catch(() => ({
+    const madrasaParentPortal = await MadrasaService.getParentPortal(userId, email, phone).catch(() => ({
       hasChildrenInMadrasa: false,
       students: [],
       announcements: [],
@@ -245,9 +261,11 @@ export class DashboardService {
     return {
       member,
       family,
-      familyMembersCount: familyMembers.length,
+      familyHead,
+      familyMembers, // Full details of all members in the family
+      familyMembersCount,
       currentMonthDuesStatus: hasPaidCurrentMonth ? 'PAID' : 'PENDING',
-      duesAmount: 250,
+      duesAmount: family?.monthlyContribution || 250,
       recentPayments: myPayments,
       recentApplications: myApplications,
       mosquePrayerTimings: mosque?.prayerTimings || null,

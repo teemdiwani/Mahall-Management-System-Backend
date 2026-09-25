@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FamiliesController = void 0;
 const families_service_js_1 = require("./families.service.js");
-const member_model_js_1 = require("../members/member.model.js");
 const apiResponse_js_1 = require("../../utils/apiResponse.js");
 const apiError_js_1 = require("../../utils/apiError.js");
 const roles_js_1 = require("../../constants/roles.js");
@@ -19,7 +18,8 @@ class FamiliesController {
     }
     static async getMyFamily(req, res, next) {
         try {
-            const result = await families_service_js_1.FamiliesService.getMyFamily(req.user._id.toString());
+            const searchNumber = req.query.number || req.query.phone || undefined;
+            const result = await families_service_js_1.FamiliesService.getMyFamily(req.user._id.toString(), req.user.email, req.user.phone, searchNumber);
             return apiResponse_js_1.ApiResponse.success(res, result);
         }
         catch (error) {
@@ -39,10 +39,13 @@ class FamiliesController {
                 roles_js_1.ROLES.COMMITTEE_MEMBER,
             ].map((r) => r.toUpperCase()).includes(roleUpper);
             if (!isAdminStaff) {
-                const member = await member_model_js_1.Member.findOne({
-                    $or: [{ userId: req.user._id }, { email: req.user.email }],
+                const { findFamilyAndMemberForUser } = await import('../../utils/memberMatcher.js');
+                const match = await findFamilyAndMemberForUser({
+                    userId: req.user._id.toString(),
+                    email: req.user.email,
+                    phone: req.user.phone,
                 });
-                if (!member || member.familyId?.toString() !== req.params.id) {
+                if (!match.family || match.family._id.toString() !== req.params.id) {
                     throw apiError_js_1.ApiError.forbidden('You are not authorized to view this family record');
                 }
             }

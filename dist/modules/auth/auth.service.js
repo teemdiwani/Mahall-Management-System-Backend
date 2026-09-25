@@ -8,12 +8,12 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const google_auth_library_1 = require("google-auth-library");
 const user_model_js_1 = require("./user.model.js");
 const member_model_js_1 = require("../members/member.model.js");
-const family_model_js_1 = require("../families/family.model.js");
 const roles_js_1 = require("../../constants/roles.js");
 const permissions_js_1 = require("../../constants/permissions.js");
 const apiError_js_1 = require("../../utils/apiError.js");
 const jwt_js_1 = require("../../utils/jwt.js");
 const env_js_1 = require("../../config/env.js");
+const mailService_js_1 = require("../../utils/mailService.js");
 const googleClient = new google_auth_library_1.OAuth2Client(env_js_1.env.GOOGLE_CLIENT_ID);
 class AuthService {
     static async register(data) {
@@ -149,15 +149,15 @@ class AuthService {
         if (!user) {
             throw apiError_js_1.ApiError.notFound('User account not found');
         }
-        // Find linked member record
-        const member = await member_model_js_1.Member.findOne({
-            $or: [{ userId: user._id }, { email: user.email }],
+        // Find linked member & family using unified matcher
+        const { findFamilyAndMemberForUser } = await import('../../utils/memberMatcher.js');
+        const match = await findFamilyAndMemberForUser({
+            userId: user._id.toString(),
+            email: user.email,
+            phone: user.phone,
         });
-        // Find linked family record
-        let family = null;
-        if (member && member.familyId) {
-            family = await family_model_js_1.Family.findById(member.familyId);
-        }
+        const member = match.currentMember;
+        const family = match.family;
         const defaultPerms = permissions_js_1.ROLE_PERMISSIONS[user.role] || [];
         const permissions = Array.from(new Set([...defaultPerms, ...user.customPermissions]));
         return {
@@ -166,6 +166,74 @@ class AuthService {
             family,
             role: user.role,
             permissions,
+        };
+    }
+    static async forgotPassword(email) {
+        const user = await user_model_js_1.User.findOne({ email: email.toLowerCase().trim() });
+        if (!user) {
+            throw apiError_js_1.ApiError.notFound('No account found with this email address');
+        }
+        if (!user.isActive) {
+            throw apiError_js_1.ApiError.forbidden('This account is currently inactive. Please contact the Mahallu administrator.');
+        }
+        // Generate 6-digit cryptographic-quality numeric OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        user.passwordResetOtp = otp;
+        user.passwordResetExpires = expires;
+        await user.save();
+        await mailService_js_1.mailService.sendPasswordResetOtpEmail({
+            email: user.email,
+            name: user.name,
+            otp,
+        });
+        return {
+            email: user.email,
+            message: 'A 6-digit verification code has been sent to your email.',
+        };
+    }
+    static async verifyResetOtp(email, otp) {
+        const user = await user_model_js_1.User.findOne({
+            email: email.toLowerCase().trim(),
+        }).select('+passwordResetOtp +passwordResetExpires');
+        if (!user || !user.passwordResetOtp || !user.passwordResetExpires) {
+            throw apiError_js_1.ApiError.badRequest('Invalid or expired verification request. Please request a new OTP.');
+        }
+        if (user.passwordResetExpires < new Date()) {
+            throw apiError_js_1.ApiError.badRequest('This verification code has expired. Please request a new code.');
+        }
+        if (user.passwordResetOtp !== otp.trim()) {
+            throw apiError_js_1.ApiError.badRequest('Invalid 6-digit verification code. Please check and try again.');
+        }
+        return {
+            valid: true,
+            message: 'OTP verified successfully. You can now set a new password.',
+        };
+    }
+    static async resetPasswordWithOtp(email, otp, newPassword) {
+        const user = await user_model_js_1.User.findOne({
+            email: email.toLowerCase().trim(),
+        }).select('+passwordResetOtp +passwordResetExpires +passwordHash');
+        if (!user || !user.passwordResetOtp || !user.passwordResetExpires) {
+            throw apiError_js_1.ApiError.badRequest('Invalid or expired verification request. Please request a new OTP.');
+        }
+        if (user.passwordResetExpires < new Date()) {
+            throw apiError_js_1.ApiError.badRequest('This verification code has expired. Please request a new code.');
+        }
+        if (user.passwordResetOtp !== otp.trim()) {
+            throw apiError_js_1.ApiError.badRequest('Invalid 6-digit verification code.');
+        }
+        if (newPassword.length < 6) {
+            throw apiError_js_1.ApiError.badRequest('New password must be at least 6 characters long.');
+        }
+        const salt = await bcryptjs_1.default.genSalt(10);
+        user.passwordHash = await bcryptjs_1.default.hash(newPassword, salt);
+        user.passwordResetOtp = undefined;
+        user.passwordResetExpires = undefined;
+        await user.save();
+        return {
+            success: true,
+            message: 'Your password has been reset successfully. You can now sign in with your new password.',
         };
     }
 }

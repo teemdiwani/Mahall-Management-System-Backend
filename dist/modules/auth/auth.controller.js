@@ -55,5 +55,35 @@ class AuthController {
             next(error);
         }
     }
+    static async forgotPassword(req, res, next) {
+        try {
+            const { email } = req.body;
+            const result = await auth_service_js_1.AuthService.forgotPassword(email);
+            return apiResponse_js_1.ApiResponse.success(res, result, 200, result.message);
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+    static async verifyResetOtp(req, res, next) {
+        try {
+            const { email, otp } = req.body;
+            const result = await auth_service_js_1.AuthService.verifyResetOtp(email, otp);
+            return apiResponse_js_1.ApiResponse.success(res, result, 200, result.message);
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+    static async resetPassword(req, res, next) {
+        try {
+            const { email, otp, newPassword } = req.body;
+            const result = await auth_service_js_1.AuthService.resetPasswordWithOtp(email, otp, newPassword);
+            return apiResponse_js_1.ApiResponse.success(res, result, 200, result.message);
+        }
+        catch (error) {
+            next(error);
+        }
+    }
 }
 exports.AuthController = AuthController;

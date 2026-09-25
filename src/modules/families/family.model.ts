@@ -8,6 +8,7 @@ export interface IFamily extends Document {
   area: string;
   phone: string;
   email?: string;
+  monthlyContribution: number;
   status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED';
   createdBy?: mongoose.Types.ObjectId;
   updatedBy?: mongoose.Types.ObjectId;
@@ -54,6 +55,11 @@ const familySchema = new Schema<IFamily>(
       type: String,
       trim: true,
       lowercase: true,
+    },
+    monthlyContribution: {
+      type: Number,
+      default: 250,
+      min: 0,
     },
     status: {
       type: String,

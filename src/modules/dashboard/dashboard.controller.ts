@@ -3,6 +3,7 @@ import { DashboardService } from './dashboard.service.js';
 import { WelfareService } from '../welfare/welfare.service.js';
 import { MadrasaService } from '../madrasa/madrasa.service.js';
 import { ApiResponse } from '../../utils/apiResponse.js';
+import { ApiError } from '../../utils/apiError.js';
 
 export class DashboardController {
   static async getAdminDashboard(_req: Request, res: Response, next: NextFunction) {
@@ -34,8 +35,37 @@ export class DashboardController {
 
   static async getMemberDashboard(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await DashboardService.getMemberDashboard(req.user!._id.toString(), req.user!.email);
+      const searchNumber = (req.query.number as string) || (req.query.phone as string) || undefined;
+      const data = await DashboardService.getMemberDashboard(
+        req.user!._id.toString(),
+        req.user!.email,
+        req.user!.phone,
+        searchNumber
+      );
       return ApiResponse.success(res, data);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async linkFamilyByPhone(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { phone } = req.body;
+      if (!phone || typeof phone !== 'string' || !phone.trim()) {
+        throw ApiError.badRequest('Please provide a valid phone number');
+      }
+      const data = await DashboardService.getMemberDashboard(
+        req.user!._id.toString(),
+        req.user!.email,
+        req.user!.phone,
+        phone.trim()
+      );
+      if (!data.family) {
+        throw ApiError.notFound(
+          'No family household found matching this number. Please check the number or contact the Mahall Secretary office.'
+        );
+      }
+      return ApiResponse.success(res, data, 200, 'Household connected successfully!');
     } catch (error) {
       next(error);
     }

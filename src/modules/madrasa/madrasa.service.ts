@@ -98,21 +98,24 @@ export class MadrasaService {
   }
 
   // ─── Parent Portal (Child Connection & Dashboard) ──────────────────────────
-  static async getParentPortal(userId: string, email?: string) {
+  static async getParentPortal(userId: string, email?: string, phone?: string) {
     const user = await User.findById(userId);
-    const member = await Member.findOne({
-      $or: [
-        { userId },
-        ...(email ? [{ email: email.toLowerCase() }] : []),
-        ...(user?.phone ? [{ phone: user.phone }] : []),
-      ],
+    const { findFamilyAndMemberForUser } = await import('../../utils/memberMatcher.js');
+    const match = await findFamilyAndMemberForUser({
+      userId,
+      email: email || user?.email,
+      phone: phone || user?.phone,
     });
+    const member = match.currentMember;
+    const family = match.family;
 
     const orConditions: any[] = [];
     if (member?._id) orConditions.push({ memberId: member._id });
-    if (member?.familyId) orConditions.push({ familyId: member.familyId });
+    if (family?._id) orConditions.push({ familyId: family._id });
     if (member?.phone) orConditions.push({ guardianPhone: member.phone });
+    if (family?.phone) orConditions.push({ guardianPhone: family.phone });
     if (user?.phone) orConditions.push({ guardianPhone: user.phone });
+    if (phone) orConditions.push({ guardianPhone: phone });
 
     if (orConditions.length === 0) {
       return {

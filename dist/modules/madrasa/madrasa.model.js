@@ -55,11 +55,16 @@ const madrasaStudentSchema = new mongoose_1.Schema({
     admissionNumber: { type: String, required: true, unique: true, index: true },
     name: { type: String, required: true, trim: true },
     memberId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Member' },
-    familyId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Family' },
+    familyId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Family', index: true },
+    classId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'MadrasaClass', index: true },
+    standard: { type: Number, index: true },
+    division: { type: String, default: 'A', trim: true },
+    academicYear: { type: String, default: '2026-2027' },
+    rollNumber: { type: String, trim: true },
     dateOfBirth: { type: Date, required: true },
     gender: { type: String, enum: ['MALE', 'FEMALE'], required: true },
     guardianName: { type: String, required: true },
-    guardianPhone: { type: String, required: true },
+    guardianPhone: { type: String, required: true, index: true },
     status: { type: String, enum: ['ACTIVE', 'INACTIVE', 'GRADUATED'], default: 'ACTIVE', index: true },
 }, { timestamps: true });
 exports.MadrasaStudent = mongoose_1.default.model('MadrasaStudent', madrasaStudentSchema);

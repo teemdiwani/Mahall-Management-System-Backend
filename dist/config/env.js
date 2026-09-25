@@ -18,12 +18,13 @@ const envSchema = zod_1.z.object({
     SERVER_URL: zod_1.z.string().default('http://localhost:5000'),
     GOOGLE_CLIENT_ID: zod_1.z.string().optional().default(''),
     GOOGLE_CLIENT_SECRET: zod_1.z.string().optional().default(''),
-    SMTP_HOST: zod_1.z.string().optional().default(''),
-    SMTP_PORT: zod_1.z.string().default('587').transform(Number),
-    SMTP_USER: zod_1.z.string().optional().default(''),
+    SMTP_HOST: zod_1.z.string().optional().default('smtp.gmail.com'),
+    SMTP_PORT: zod_1.z.string().default('465').transform(Number),
+    SMTP_USER: zod_1.z.string().optional().default('teemdiwani@gmail.com'),
     SMTP_PASS: zod_1.z.string().optional().default(''),
-    SMTP_SECURE: zod_1.z.string().optional().default('false').transform(val => val === 'true'),
-    SMTP_FROM: zod_1.z.string().optional().default('Mahallu Office <noreply@mahallu.org>'),
+    GMAIL_APP_PASSWORD: zod_1.z.string().optional().default(''),
+    SMTP_SECURE: zod_1.z.string().optional().default('true').transform(val => val === 'true'),
+    SMTP_FROM: zod_1.z.string().optional().default('MahallConnect <teemdiwani@gmail.com>'),
 });
 const parsed = envSchema.safeParse(process.env);
 if (!parsed.success) {

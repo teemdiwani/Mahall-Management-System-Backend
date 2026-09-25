@@ -21,6 +21,8 @@ const envSchema = z.object({
   GMAIL_APP_PASSWORD: z.string().optional().default(''),
   SMTP_SECURE: z.string().optional().default('true').transform(val => val === 'true'),
   SMTP_FROM: z.string().optional().default('MahallConnect <teemdiwani@gmail.com>'),
+  RAZORPAY_KEY_ID: z.string().optional().default('rzp_test_SWHZJrawTUZSq9'),
+  RAZORPAY_KEY_SECRET: z.string().optional().default('uSpgWfpwaudLUiVPyHTZsLo7'),
 });
 
 const parsed = envSchema.safeParse(process.env);

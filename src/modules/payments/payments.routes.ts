@@ -11,6 +11,16 @@ router.use(authenticate);
 // Member's own payments
 router.get('/my-payments', PaymentsController.getMyPayments);
 
+// Automated 28th monthly dues trigger (checks date >= 28 or can be called explicitly)
+router.post('/trigger-28th-dues', PaymentsController.trigger28thDues);
+
+// Razorpay Online Payment Integration
+router.post('/:id/razorpay-order', PaymentsController.createRazorpayOrder);
+router.post('/:id/verify-razorpay', PaymentsController.verifyRazorpayPayment);
+
+// Official Mahallu Invoice
+router.get('/:id/invoice', PaymentsController.getInvoice);
+
 // All payments listing (Treasurer, Admin)
 router.get('/', requirePermission(PERMISSIONS.FINANCE_VIEW), PaymentsController.list);
 

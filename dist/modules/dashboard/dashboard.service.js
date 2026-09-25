@@ -13,6 +13,7 @@ const mosque_model_js_1 = require("../mosque/mosque.model.js");
 const announcement_model_js_1 = require("../announcements/announcement.model.js");
 const committee_model_js_1 = require("../committee/committee.model.js");
 const volunteer_model_js_1 = require("../volunteers/volunteer.model.js");
+const madrasa_service_js_1 = require("../madrasa/madrasa.service.js");
 class DashboardService {
     static async getAdminDashboard() {
         const currentMonth = new Date().toISOString().slice(0, 7);
@@ -173,24 +174,32 @@ class DashboardService {
         const adminData = await DashboardService.getAdminDashboard();
         return adminData.charts;
     }
-    static async getMemberDashboard(userId, email) {
+    static async getMemberDashboard(userId, email, phone, searchNumber) {
         const currentMonth = new Date().toISOString().slice(0, 7);
-        const member = await member_model_js_1.Member.findOne({
-            $or: [
-                { userId },
-                ...(email ? [{ email: email.toLowerCase() }] : []),
-            ],
+        // Dynamic import to prevent circular dependency
+        const { findFamilyAndMemberForUser } = await import('../../utils/memberMatcher.js');
+        // Flexible matching: matches user credentials, ANY member's phone number, or family phone/code
+        const match = await findFamilyAndMemberForUser({
+            userId,
+            email,
+            phone,
+            searchNumber,
         });
-        let family = null;
-        let familyMembers = [];
+        const member = match.currentMember;
+        const family = match.family;
+        const familyHead = match.familyHead;
+        const familyMembers = match.familyMembers;
+        const familyMembersCount = match.familyMembersCount;
         let myPayments = [];
-        let myApplications = [];
-        if (member && member.familyId) {
-            family = await family_model_js_1.Family.findById(member.familyId);
-            familyMembers = await member_model_js_1.Member.find({ familyId: member.familyId });
-            myPayments = await payment_model_js_1.Payment.find({ familyId: member.familyId }).sort({ createdAt: -1 }).limit(5);
+        if (family?._id) {
+            myPayments = await payment_model_js_1.Payment.find({ familyId: family._id }).sort({ createdAt: -1 }).limit(5);
         }
-        myApplications = await application_model_js_1.Application.find({ applicant: userId }).sort({ createdAt: -1 }).limit(5);
+        const myApplications = await application_model_js_1.Application.find({
+            $or: [
+                { applicant: userId },
+                ...(family?._id ? [{ familyId: family._id }] : []),
+            ],
+        }).sort({ createdAt: -1 }).limit(5);
         const mosque = await mosque_model_js_1.Mosque.findOne();
         const announcements = await announcement_model_js_1.Announcement.find({
             status: 'ACTIVE',
@@ -203,18 +212,27 @@ class DashboardService {
             .limit(3);
         // Dues calculation
         const hasPaidCurrentMonth = myPayments.some((p) => p.month === currentMonth && p.type === 'MONTHLY' && p.status === 'PAID');
+        const madrasaParentPortal = await madrasa_service_js_1.MadrasaService.getParentPortal(userId, email, phone).catch(() => ({
+            hasChildrenInMadrasa: false,
+            students: [],
+            announcements: [],
+            stats: null,
+        }));
         return {
             member,
             family,
-            familyMembersCount: familyMembers.length,
+            familyHead,
+            familyMembers, // Full details of all members in the family
+            familyMembersCount,
             currentMonthDuesStatus: hasPaidCurrentMonth ? 'PAID' : 'PENDING',
-            duesAmount: 250,
+            duesAmount: family?.monthlyContribution || 250,
             recentPayments: myPayments,
             recentApplications: myApplications,
             mosquePrayerTimings: mosque?.prayerTimings || null,
             jumahDetails: mosque?.jumahDetails || null,
             announcements,
             upcomingEvents,
+            madrasaParentPortal,
         };
     }
     static async getTreasurerDashboard() {
