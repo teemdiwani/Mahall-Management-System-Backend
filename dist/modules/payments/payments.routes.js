@@ -9,6 +9,14 @@ const router = (0, express_1.Router)();
 router.use(auth_js_1.authenticate);
 // Member's own payments
 router.get('/my-payments', payments_controller_js_1.PaymentsController.getMyPayments);
+// Automated 28th monthly dues trigger (checks date >= 28 or can be called explicitly)
+router.post('/trigger-28th-dues', payments_controller_js_1.PaymentsController.trigger28thDues);
+// Razorpay Online Payment Integration
+router.post('/contribute-online', payments_controller_js_1.PaymentsController.contributeOnline);
+router.post('/:id/razorpay-order', payments_controller_js_1.PaymentsController.createRazorpayOrder);
+router.post('/:id/verify-razorpay', payments_controller_js_1.PaymentsController.verifyRazorpayPayment);
+// Official Mahallu Invoice
+router.get('/:id/invoice', payments_controller_js_1.PaymentsController.getInvoice);
 // All payments listing (Treasurer, Admin)
 router.get('/', (0, authorize_js_1.requirePermission)(permissions_js_1.PERMISSIONS.FINANCE_VIEW), payments_controller_js_1.PaymentsController.list);
 // Batch generate monthly contributions

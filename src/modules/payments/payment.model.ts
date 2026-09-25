@@ -2,16 +2,18 @@ import mongoose, { Schema, type Document, type Model } from 'mongoose';
 
 export interface IPayment extends Document {
   paymentNumber: string;
-  familyId: mongoose.Types.ObjectId;
+  familyId?: mongoose.Types.ObjectId;
   memberId?: mongoose.Types.ObjectId;
   amount: number;
   month?: string; // YYYY-MM
-  type: 'MONTHLY' | 'DONATION' | 'ZAKAT' | 'FITRAH' | 'EVENT' | 'OTHER';
+  type: 'MONTHLY' | 'DONATION' | 'ZAKAT' | 'FITRAH' | 'IFTAR' | 'EVENT' | 'TUITION' | 'OTHER';
   status: 'PENDING' | 'PROCESSING' | 'PAID' | 'FAILED' | 'REFUNDED';
   paymentMethod: 'CASH' | 'BANK_TRANSFER' | 'ONLINE' | 'UPI';
   transactionId?: string;
   receiptNumber?: string;
   verifiedBy?: mongoose.Types.ObjectId;
+  studentId?: mongoose.Types.ObjectId;
+  madrasaFeeId?: mongoose.Types.ObjectId;
   notes?: string;
   paidAt?: Date;
   razorpayOrderId?: string;
@@ -31,12 +33,22 @@ const paymentSchema = new Schema<IPayment>(
     familyId: {
       type: Schema.Types.ObjectId,
       ref: 'Family',
-      required: true,
+      required: false,
       index: true,
     },
     memberId: {
       type: Schema.Types.ObjectId,
       ref: 'Member',
+      index: true,
+    },
+    studentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'MadrasaStudent',
+      index: true,
+    },
+    madrasaFeeId: {
+      type: Schema.Types.ObjectId,
+      ref: 'MadrasaFee',
       index: true,
     },
     amount: {
@@ -50,7 +62,7 @@ const paymentSchema = new Schema<IPayment>(
     },
     type: {
       type: String,
-      enum: ['MONTHLY', 'DONATION', 'ZAKAT', 'FITRAH', 'EVENT', 'OTHER'],
+      enum: ['MONTHLY', 'DONATION', 'ZAKAT', 'FITRAH', 'IFTAR', 'EVENT', 'TUITION', 'OTHER'],
       default: 'MONTHLY',
       index: true,
     },

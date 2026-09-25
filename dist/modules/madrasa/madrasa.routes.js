@@ -36,6 +36,9 @@ router.delete('/results/:id', (0, authorize_js_1.requirePermission)(permissions_
 router.get('/fees', madrasa_controller_js_1.MadrasaController.listFees);
 router.post('/fees', (0, authorize_js_1.requirePermission)(permissions_js_1.PERMISSIONS.MADRASA_MANAGE), madrasa_controller_js_1.MadrasaController.recordFeePayment);
 router.patch('/fees/:id', (0, authorize_js_1.requirePermission)(permissions_js_1.PERMISSIONS.MADRASA_MANAGE), madrasa_controller_js_1.MadrasaController.updateFeeStatus);
+router.post('/fees/:id/razorpay-order', madrasa_controller_js_1.MadrasaController.createRazorpayOrder);
+router.post('/fees/:id/verify-razorpay', madrasa_controller_js_1.MadrasaController.verifyRazorpayPayment);
+router.get('/fees/:id/invoice', madrasa_controller_js_1.MadrasaController.getFeeInvoice);
 // ─── Student Attendance ─────────────────────────────────────────────────────
 router.get('/attendance', madrasa_controller_js_1.MadrasaController.listAttendance);
 router.post('/attendance', (0, authorize_js_1.requirePermission)(permissions_js_1.PERMISSIONS.MADRASA_ATTENDANCE), madrasa_controller_js_1.MadrasaController.recordAttendance);

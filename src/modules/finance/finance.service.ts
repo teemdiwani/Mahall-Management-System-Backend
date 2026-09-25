@@ -6,9 +6,9 @@ export class FinanceService {
   static async getFinancialOverview(month?: string) {
     const currentMonth = month || new Date().toISOString().slice(0, 7);
 
-    // Active families count
-    const activeFamiliesCount = await Family.countDocuments({ status: 'ACTIVE' });
-    const expectedCollection = activeFamiliesCount * 250;
+    // Active families expected contribution
+    const activeFamilies = await Family.find({ status: 'ACTIVE' }, 'monthlyContribution');
+    const expectedCollection = activeFamilies.reduce((sum, f) => sum + (f.monthlyContribution || 250), 0);
 
     // Monthly payments collected
     const collectedMonthlyAgg = await Payment.aggregate([

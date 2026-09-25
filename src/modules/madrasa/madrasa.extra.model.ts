@@ -211,6 +211,10 @@ export interface IMadrasaFee extends Document {
   receiptNumber?: string;
   collectedBy?: string;
   notes?: string;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  transactionId?: string;
+  paymentId?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -235,6 +239,10 @@ const madrasaFeeSchema = new Schema<IMadrasaFee>(
     receiptNumber: { type: String },
     collectedBy: { type: String },
     notes: { type: String },
+    razorpayOrderId: { type: String },
+    razorpayPaymentId: { type: String },
+    transactionId: { type: String },
+    paymentId: { type: Schema.Types.ObjectId, ref: 'Payment' },
   },
   { timestamps: true }
 );

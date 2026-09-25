@@ -13,6 +13,24 @@ class CommitteeController {
             next(error);
         }
     }
+    static async createMember(req, res, next) {
+        try {
+            const member = await committee_service_js_1.CommitteeService.createMember(req.body);
+            return apiResponse_js_1.ApiResponse.success(res, member, 201, 'Committee member added');
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+    static async deleteMember(req, res, next) {
+        try {
+            await committee_service_js_1.CommitteeService.deleteMember(req.params.id);
+            return apiResponse_js_1.ApiResponse.success(res, null, 200, 'Committee member removed');
+        }
+        catch (error) {
+            next(error);
+        }
+    }
     static async listMeetings(_req, res, next) {
         try {
             const meetings = await committee_service_js_1.CommitteeService.listMeetings();

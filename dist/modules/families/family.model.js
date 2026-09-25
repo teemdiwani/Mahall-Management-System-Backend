@@ -74,6 +74,11 @@ const familySchema = new mongoose_1.Schema({
         trim: true,
         lowercase: true,
     },
+    monthlyContribution: {
+        type: Number,
+        default: 250,
+        min: 0,
+    },
     status: {
         type: String,
         enum: ['ACTIVE', 'INACTIVE', 'ARCHIVED'],

@@ -125,6 +125,10 @@ const madrasaFeeSchema = new mongoose_1.Schema({
     receiptNumber: { type: String },
     collectedBy: { type: String },
     notes: { type: String },
+    razorpayOrderId: { type: String },
+    razorpayPaymentId: { type: String },
+    transactionId: { type: String },
+    paymentId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Payment' },
 }, { timestamps: true });
 madrasaFeeSchema.index({ studentId: 1, month: 1, feeType: 1 }, { unique: true });
 exports.MadrasaFee = mongoose_1.default.model('MadrasaFee', madrasaFeeSchema);

@@ -7,9 +7,9 @@ const family_model_js_1 = require("../families/family.model.js");
 class FinanceService {
     static async getFinancialOverview(month) {
         const currentMonth = month || new Date().toISOString().slice(0, 7);
-        // Active families count
-        const activeFamiliesCount = await family_model_js_1.Family.countDocuments({ status: 'ACTIVE' });
-        const expectedCollection = activeFamiliesCount * 250;
+        // Active families expected contribution
+        const activeFamilies = await family_model_js_1.Family.find({ status: 'ACTIVE' }, 'monthlyContribution');
+        const expectedCollection = activeFamilies.reduce((sum, f) => sum + (f.monthlyContribution || 250), 0);
         // Monthly payments collected
         const collectedMonthlyAgg = await payment_model_js_1.Payment.aggregate([
             { $match: { month: currentMonth, type: 'MONTHLY', status: 'PAID' } },

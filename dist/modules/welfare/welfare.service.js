@@ -81,15 +81,25 @@ class WelfareService {
         ]);
         const totalCollected = (collected[0]?.total || 0) + (fitrah[0]?.total || 0);
         const totalDistributed = distributed[0]?.total || 0;
-        const recentDistributions = await application_model_js_1.Application.find({ type: 'ZAKAT', status: { $in: ['APPROVED', 'COMPLETED'] } })
-            .populate('applicant', 'name')
-            .sort({ updatedAt: -1 })
-            .limit(10);
+        const [recentDistributions, recentContributions] = await Promise.all([
+            application_model_js_1.Application.find({ type: 'ZAKAT', status: { $in: ['APPROVED', 'COMPLETED'] } })
+                .populate('applicant', 'name')
+                .sort({ updatedAt: -1 })
+                .limit(10),
+            payment_model_js_1.Payment.find({ type: { $in: ['ZAKAT', 'FITRAH'] }, status: 'PAID' })
+                .populate('familyId', 'name familyCode')
+                .populate('memberId', 'name')
+                .sort({ paidAt: -1, createdAt: -1 })
+                .limit(10),
+        ]);
         return {
-            totalCollected, totalDistributed, balance: Math.max(0, totalCollected - totalDistributed),
+            totalCollected,
+            totalDistributed,
+            balance: Math.max(0, totalCollected - totalDistributed),
             collectedCount: (collected[0]?.count || 0) + (fitrah[0]?.count || 0),
             distributedCount: distributed[0]?.count || 0,
             recentDistributions,
+            recentContributions,
         };
     }
     static async distributeZakat(data) {

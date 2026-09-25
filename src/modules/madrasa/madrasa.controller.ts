@@ -177,6 +177,31 @@ export class MadrasaController {
     } catch (error) { next(error); }
   }
 
+  static async createRazorpayOrder(req: Request, res: Response, next: NextFunction) {
+    try {
+      const orderData = await MadrasaService.createFeeRazorpayOrder(req.params.id as string);
+      return ApiResponse.success(res, orderData, 200, 'Razorpay order created for tuition fee');
+    } catch (error) { next(error); }
+  }
+
+  static async verifyRazorpayPayment(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await MadrasaService.verifyFeeRazorpayPayment(
+        req.params.id as string,
+        req.body,
+        req.user?._id?.toString()
+      );
+      return ApiResponse.success(res, result, 200, 'Tuition fee payment verified successfully');
+    } catch (error) { next(error); }
+  }
+
+  static async getFeeInvoice(req: Request, res: Response, next: NextFunction) {
+    try {
+      const invoice = await MadrasaService.getFeeInvoice(req.params.id as string);
+      return ApiResponse.success(res, invoice);
+    } catch (error) { next(error); }
+  }
+
   // ─── Student Attendance ───────────────────────────────────────────────────
   static async listAttendance(req: Request, res: Response, next: NextFunction) {
     try {

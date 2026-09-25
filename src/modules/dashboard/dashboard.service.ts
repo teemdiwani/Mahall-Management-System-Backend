@@ -278,10 +278,10 @@ export class DashboardService {
 
   static async getTreasurerDashboard() {
     const currentMonth = new Date().toISOString().slice(0, 7);
-    const activeFamiliesCount = await Family.countDocuments({ status: 'ACTIVE' });
-    const expected = activeFamiliesCount * 250;
+    const activeFamilies = await Family.find({ status: 'ACTIVE' }, 'monthlyContribution');
+    const expected = activeFamilies.reduce((sum, f) => sum + (f.monthlyContribution || 250), 0);
 
-    const [paidMonthlyAgg, allIncomeAgg, allExpensesAgg, pendingCount, recentPayments, recentExpenses] =
+    const [paidMonthlyAgg, allIncomeAgg, allExpensesAgg, pendingCount, recentPayments, recentExpenses, monthlyIncomeAgg, monthlyExpensesAgg] =
       await Promise.all([
         Payment.aggregate([
           { $match: { month: currentMonth, type: 'MONTHLY', status: 'PAID' } },
@@ -295,18 +295,45 @@ export class DashboardService {
         Payment.countDocuments({ status: 'PENDING' }),
         Payment.find().populate('familyId', 'familyCode name').sort({ createdAt: -1 }).limit(8),
         Expense.find().sort({ date: -1 }).limit(8),
+        Payment.aggregate([
+          { $match: { status: 'PAID', month: { $exists: true, $ne: null } } },
+          { $group: { _id: '$month', amount: { $sum: '$amount' } } },
+          { $sort: { _id: 1 } },
+        ]),
+        Expense.aggregate([
+          {
+            $group: {
+              _id: { $substr: ['$date', 0, 7] },
+              amount: { $sum: '$amount' },
+            },
+          },
+          { $sort: { _id: 1 } },
+        ]),
       ]);
 
     const collected = paidMonthlyAgg[0]?.total || 0;
     const totalIncome = allIncomeAgg[0]?.total || 0;
     const totalExpenses = allExpensesAgg[0]?.total || 0;
 
-    const monthlyTrend = await Payment.aggregate([
-      { $match: { status: 'PAID', month: { $exists: true, $ne: null } } },
-      { $group: { _id: '$month', amount: { $sum: '$amount' } } },
-      { $sort: { _id: 1 } },
-      { $limit: 6 },
-    ]);
+    const expenseMap = new Map(monthlyExpensesAgg.map((e) => [e._id, e.amount]));
+    const allMonths = Array.from(
+      new Set([
+        ...monthlyIncomeAgg.map((r) => r._id),
+        ...monthlyExpensesAgg.map((e) => e._id),
+        currentMonth,
+      ])
+    ).sort();
+
+    const monthlyTrend = allMonths.slice(-6).map((m) => {
+      const inc = monthlyIncomeAgg.find((r) => r._id === m)?.amount || 0;
+      const exp = expenseMap.get(m) || 0;
+      return {
+        month: m,
+        amount: inc,
+        income: inc,
+        expenses: exp,
+      };
+    });
 
     return {
       cards: {
@@ -319,7 +346,7 @@ export class DashboardService {
         balance: totalIncome - totalExpenses,
       },
       charts: {
-        monthlyTrend: monthlyTrend.map((m) => ({ month: m._id, amount: m.amount })),
+        monthlyTrend,
       },
       recentPayments,
       recentExpenses,

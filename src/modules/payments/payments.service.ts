@@ -147,6 +147,37 @@ export class PaymentsService {
       }
     }
 
+    // Sync any pending Madrasa tuition fees for family students into Payment records
+    try {
+      const { MadrasaFee } = await import('../madrasa/madrasa.extra.model.js');
+      const pendingFees = await MadrasaFee.find({
+        familyId: match.family._id,
+        status: 'PENDING',
+      }).populate('studentId', 'name admissionNumber');
+
+      for (const fee of pendingFees) {
+        const existingFeePayment = await Payment.findOne({ madrasaFeeId: fee._id });
+        if (!existingFeePayment) {
+          const studentName = (fee.studentId as any)?.name || 'Student';
+          const admNo = (fee.studentId as any)?.admissionNumber || fee._id.toString().slice(-4);
+          await Payment.create({
+            paymentNumber: `PAY-MDR-${fee.month.replace('-', '')}-${admNo}`,
+            familyId: match.family._id,
+            studentId: (fee.studentId as any)?._id || fee.studentId,
+            madrasaFeeId: fee._id,
+            amount: fee.amount,
+            month: fee.month,
+            type: 'TUITION',
+            status: 'PENDING',
+            paymentMethod: 'ONLINE',
+            notes: `Madrasa Tuition Fee for ${studentName} (${fee.month})`,
+          });
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+
     const payments = await Payment.find({ familyId: match.family._id })
       .populate({
         path: 'familyId',
@@ -154,6 +185,7 @@ export class PaymentsService {
         populate: { path: 'familyHead', select: 'name phone' },
       })
       .populate('memberId', 'name phone memberCode')
+      .populate('studentId', 'name admissionNumber standard division')
       .sort({ createdAt: -1 });
 
     return payments;
@@ -210,6 +242,72 @@ export class PaymentsService {
   }
 
   /**
+   * Creates a direct online contribution (Zakat, Fitrah, Iftar, Donation) and initializes a Razorpay order
+   */
+  static async createOnlineContribution(data: {
+    amount: number;
+    type: 'ZAKAT' | 'FITRAH' | 'IFTAR' | 'DONATION' | 'MONTHLY' | 'EVENT' | 'OTHER';
+    donorName?: string;
+    phone?: string;
+    notes?: string;
+    userId?: string;
+    userEmail?: string;
+    userPhone?: string;
+  }) {
+    if (!data.amount || data.amount <= 0) {
+      throw ApiError.badRequest('Contribution amount must be greater than zero');
+    }
+
+    let familyId: any = undefined;
+    let memberId: any = undefined;
+
+    if (data.userId) {
+      try {
+        const { findFamilyAndMemberForUser } = await import('../../utils/memberMatcher.js');
+        const match = await findFamilyAndMemberForUser({
+          userId: data.userId,
+          email: data.userEmail,
+          phone: data.userPhone || data.phone,
+        });
+        if (match.family) familyId = match.family._id;
+        if (match.currentMember) memberId = match.currentMember._id;
+      } catch {
+        // ignore
+      }
+    }
+
+    const typePrefix =
+      data.type === 'ZAKAT'
+        ? 'ZKT'
+        : data.type === 'FITRAH'
+        ? 'FTR'
+        : data.type === 'IFTAR'
+        ? 'IFT'
+        : 'DON';
+    const paymentNumber = `PAY-${typePrefix}-${Date.now().toString().slice(-6)}-${Math.floor(
+      100 + Math.random() * 900
+    )}`;
+
+    const notesParts: string[] = [];
+    if (data.donorName) notesParts.push(`Donor: ${data.donorName}`);
+    if (data.phone) notesParts.push(`Phone: ${data.phone}`);
+    if (data.notes) notesParts.push(data.notes);
+
+    const payment = await Payment.create({
+      paymentNumber,
+      familyId,
+      memberId,
+      amount: data.amount,
+      type: data.type,
+      status: 'PENDING',
+      paymentMethod: 'ONLINE',
+      notes: notesParts.length > 0 ? notesParts.join(' | ') : `${data.type} Contribution`,
+    });
+
+    return await this.createRazorpayOrder(payment._id.toString());
+  }
+
+  /**
    * Verifies Razorpay payment signature and updates payment status to PAID
    */
   static async verifyRazorpayPayment(
@@ -255,6 +353,24 @@ export class PaymentsService {
     }
     await payment.save();
 
+    // If this payment is linked to a Madrasa tuition fee, sync and mark the MadrasaFee as PAID
+    if (payment.madrasaFeeId) {
+      try {
+        const { MadrasaFee } = await import('../madrasa/madrasa.extra.model.js');
+        await MadrasaFee.findByIdAndUpdate(payment.madrasaFeeId, {
+          status: 'PAID',
+          paidDate: new Date(),
+          paymentMethod: 'ONLINE',
+          receiptNumber: receiptNumber,
+          razorpayPaymentId: data.razorpay_payment_id,
+          transactionId: data.razorpay_payment_id,
+          paymentId: payment._id,
+        });
+      } catch (err) {
+        // ignore
+      }
+    }
+
     // Create notification for family members
     const members = await Member.find({
       familyId: payment.familyId,
@@ -278,17 +394,49 @@ export class PaymentsService {
    * Returns official Mahall invoice details for printing/viewing
    */
   static async getPaymentInvoice(paymentId: string) {
-    const payment = await Payment.findById(paymentId)
+    let payment = await Payment.findById(paymentId)
       .populate({
         path: 'familyId',
         select: 'familyCode name address area phone monthlyContribution familyHead',
         populate: { path: 'familyHead', select: 'name phone email memberCode' },
       })
       .populate('memberId', 'name phone memberCode')
+      .populate('studentId', 'name admissionNumber standard division rollNumber')
       .populate('verifiedBy', 'name email');
 
     if (!payment) {
-      throw ApiError.notFound('Payment record not found');
+      // Check if it's a MadrasaFee ID
+      const { MadrasaFee } = await import('../madrasa/madrasa.extra.model.js');
+      const fee = await MadrasaFee.findById(paymentId)
+        .populate('studentId')
+        .populate('madrasaId')
+        .populate({
+          path: 'familyId',
+          select: 'familyCode name address area phone monthlyContribution familyHead',
+          populate: { path: 'familyHead', select: 'name phone email memberCode' },
+        });
+
+      if (fee) {
+        return {
+          _id: fee._id,
+          paymentNumber: `PAY-MDR-${fee.month.replace('-', '')}-${(fee.studentId as any)?.admissionNumber || fee._id.toString().slice(-4)}`,
+          familyId: fee.familyId,
+          amount: fee.amount,
+          month: fee.month,
+          type: 'TUITION',
+          status: fee.status,
+          paymentMethod: fee.paymentMethod || 'ONLINE',
+          receiptNumber: fee.receiptNumber,
+          transactionId: fee.transactionId || fee.razorpayPaymentId,
+          razorpayPaymentId: fee.razorpayPaymentId,
+          razorpayOrderId: fee.razorpayOrderId,
+          paidAt: fee.paidDate || fee.createdAt,
+          createdAt: fee.createdAt,
+          notes: fee.notes || `Madrasa Tuition Fee for ${(fee.studentId as any)?.name || 'Student'} (${fee.month})`,
+          studentId: fee.studentId,
+        };
+      }
+      throw ApiError.notFound('Payment or tuition fee record not found');
     }
 
     return payment;

@@ -1,9 +1,18 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MadrasaService = void 0;
+const crypto_1 = __importDefault(require("crypto"));
+const razorpay_1 = __importDefault(require("razorpay"));
 const madrasa_model_js_1 = require("./madrasa.model.js");
 const member_model_js_1 = require("../members/member.model.js");
 const user_model_js_1 = require("../auth/user.model.js");
+const payment_model_js_1 = require("../payments/payment.model.js");
+const notification_model_js_1 = require("../notifications/notification.model.js");
+const apiError_js_1 = require("../../utils/apiError.js");
+const env_js_1 = require("../../config/env.js");
 const roles_js_1 = require("../../constants/roles.js");
 const madrasa_extra_model_js_1 = require("./madrasa.extra.model.js");
 class MadrasaService {
@@ -431,6 +440,152 @@ class MadrasaService {
             update.paidDate = new Date();
         }
         return madrasa_extra_model_js_1.MadrasaFee.findByIdAndUpdate(id, update, { new: true });
+    }
+    /**
+     * Creates a Razorpay Order for a pending Madrasa Tuition Fee
+     */
+    static async createFeeRazorpayOrder(feeId) {
+        const fee = await madrasa_extra_model_js_1.MadrasaFee.findById(feeId)
+            .populate('studentId')
+            .populate('madrasaId')
+            .populate('familyId');
+        if (!fee) {
+            throw apiError_js_1.ApiError.notFound('Madrasa tuition fee record not found');
+        }
+        if (fee.status === 'PAID') {
+            throw apiError_js_1.ApiError.badRequest('This tuition fee has already been paid and verified');
+        }
+        const keyId = env_js_1.env.RAZORPAY_KEY_ID || 'rzp_test_SWHZJrawTUZSq9';
+        const keySecret = env_js_1.env.RAZORPAY_KEY_SECRET || 'uSpgWfpwaudLUiVPyHTZsLo7';
+        const razorpay = new razorpay_1.default({
+            key_id: keyId,
+            key_secret: keySecret,
+        });
+        const amountInPaise = Math.round(fee.amount * 100);
+        const studentName = fee.studentId?.name || 'Student';
+        const receiptRef = (fee.receiptNumber || `MDR-${fee._id}`).slice(-40);
+        const order = await razorpay.orders.create({
+            amount: amountInPaise,
+            currency: 'INR',
+            receipt: receiptRef,
+            notes: {
+                feeId: fee._id.toString(),
+                studentId: fee.studentId?._id?.toString() || fee.studentId?.toString() || '',
+                studentName,
+                month: fee.month,
+                feeType: fee.feeType,
+            },
+        });
+        fee.razorpayOrderId = order.id;
+        await fee.save();
+        return {
+            orderId: order.id,
+            amount: fee.amount,
+            amountInPaise,
+            currency: 'INR',
+            keyId,
+            fee,
+            studentName,
+        };
+    }
+    /**
+     * Verifies Razorpay payment signature for Madrasa Tuition Fee and updates to PAID
+     */
+    static async verifyFeeRazorpayPayment(feeId, data, verifiedByUserId) {
+        const fee = await madrasa_extra_model_js_1.MadrasaFee.findById(feeId)
+            .populate('studentId')
+            .populate('madrasaId')
+            .populate('familyId');
+        if (!fee) {
+            throw apiError_js_1.ApiError.notFound('Madrasa tuition fee record not found');
+        }
+        if (fee.status === 'PAID') {
+            return { fee, payment: await payment_model_js_1.Payment.findOne({ madrasaFeeId: fee._id }) };
+        }
+        const keySecret = env_js_1.env.RAZORPAY_KEY_SECRET || 'uSpgWfpwaudLUiVPyHTZsLo7';
+        // Verify HMAC-SHA256 signature
+        const body = `${data.razorpay_order_id}|${data.razorpay_payment_id}`;
+        const expectedSignature = crypto_1.default.createHmac('sha256', keySecret).update(body).digest('hex');
+        if (expectedSignature !== data.razorpay_signature) {
+            throw apiError_js_1.ApiError.badRequest('Razorpay payment signature verification failed');
+        }
+        const receiptNumber = `MDR-RCP-${new Date().getFullYear()}-${String(Math.floor(10000 + Math.random() * 90000))}`;
+        fee.status = 'PAID';
+        fee.paidDate = new Date();
+        fee.paymentMethod = 'ONLINE';
+        fee.razorpayPaymentId = data.razorpay_payment_id;
+        fee.transactionId = data.razorpay_payment_id;
+        fee.receiptNumber = receiptNumber;
+        // Create or update central Payment record for accounting and member portal
+        let payment = await payment_model_js_1.Payment.findOne({ madrasaFeeId: fee._id });
+        if (!payment) {
+            payment = await payment_model_js_1.Payment.create({
+                paymentNumber: `PAY-MDR-${fee.month.replace('-', '')}-${String(Math.floor(1000 + Math.random() * 9000))}`,
+                familyId: fee.familyId || fee.studentId?.familyId,
+                amount: fee.amount,
+                month: fee.month,
+                type: 'TUITION',
+                status: 'PAID',
+                paymentMethod: 'ONLINE',
+                receiptNumber,
+                transactionId: data.razorpay_payment_id,
+                razorpayOrderId: data.razorpay_order_id,
+                razorpayPaymentId: data.razorpay_payment_id,
+                studentId: fee.studentId?._id || fee.studentId,
+                madrasaFeeId: fee._id,
+                notes: `Madrasa Tuition Fee for ${fee.studentId?.name || 'Student'} (${fee.month})`,
+                paidAt: new Date(),
+                verifiedBy: verifiedByUserId,
+            });
+        }
+        else {
+            payment.status = 'PAID';
+            payment.paymentMethod = 'ONLINE';
+            payment.transactionId = data.razorpay_payment_id;
+            payment.razorpayPaymentId = data.razorpay_payment_id;
+            payment.receiptNumber = receiptNumber;
+            payment.paidAt = new Date();
+            await payment.save();
+        }
+        fee.paymentId = payment._id;
+        await fee.save();
+        // Notify family members
+        const targetFamilyId = fee.familyId || fee.studentId?.familyId;
+        if (targetFamilyId) {
+            const members = await member_model_js_1.Member.find({
+                familyId: targetFamilyId,
+                userId: { $exists: true, $ne: null },
+            });
+            for (const m of members) {
+                if (m.userId) {
+                    await notification_model_js_1.Notification.create({
+                        recipient: m.userId,
+                        type: 'PAYMENT',
+                        title: 'Madrasa Tuition Fee Paid',
+                        message: `Tuition fee of ₹${fee.amount} for ${fee.studentId?.name || 'Student'} (${fee.month}) was successfully paid via Razorpay. Receipt: ${receiptNumber}`,
+                    });
+                }
+            }
+        }
+        return { fee, payment };
+    }
+    /**
+     * Returns official Madrasa Fee invoice details
+     */
+    static async getFeeInvoice(feeId) {
+        const fee = await madrasa_extra_model_js_1.MadrasaFee.findById(feeId)
+            .populate('studentId')
+            .populate('madrasaId')
+            .populate({
+            path: 'familyId',
+            select: 'familyCode name address area phone monthlyContribution familyHead',
+            populate: { path: 'familyHead', select: 'name phone email memberCode' },
+        })
+            .populate('paymentId');
+        if (!fee) {
+            throw apiError_js_1.ApiError.notFound('Madrasa fee record not found');
+        }
+        return fee;
     }
     // ─── Student Attendance ───────────────────────────────────────────────────
     static async listAttendance(query) {

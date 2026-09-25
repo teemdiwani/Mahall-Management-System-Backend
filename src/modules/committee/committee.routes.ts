@@ -9,6 +9,8 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/members', CommitteeController.listMembers);
+router.post('/members', requirePermission(PERMISSIONS.COMMITTEE_MANAGE), CommitteeController.createMember);
+router.delete('/members/:id', requirePermission(PERMISSIONS.COMMITTEE_MANAGE), CommitteeController.deleteMember);
 router.get('/meetings', CommitteeController.listMeetings);
 router.post('/meetings', requirePermission(PERMISSIONS.COMMITTEE_MANAGE), CommitteeController.scheduleMeeting);
 router.patch('/meetings/:id/minutes', requirePermission(PERMISSIONS.COMMITTEE_MANAGE), CommitteeController.updateMinutes);

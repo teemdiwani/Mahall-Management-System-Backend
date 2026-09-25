@@ -8,6 +8,8 @@ const permissions_js_1 = require("../../constants/permissions.js");
 const router = (0, express_1.Router)();
 router.use(auth_js_1.authenticate);
 router.get('/members', committee_controller_js_1.CommitteeController.listMembers);
+router.post('/members', (0, authorize_js_1.requirePermission)(permissions_js_1.PERMISSIONS.COMMITTEE_MANAGE), committee_controller_js_1.CommitteeController.createMember);
+router.delete('/members/:id', (0, authorize_js_1.requirePermission)(permissions_js_1.PERMISSIONS.COMMITTEE_MANAGE), committee_controller_js_1.CommitteeController.deleteMember);
 router.get('/meetings', committee_controller_js_1.CommitteeController.listMeetings);
 router.post('/meetings', (0, authorize_js_1.requirePermission)(permissions_js_1.PERMISSIONS.COMMITTEE_MANAGE), committee_controller_js_1.CommitteeController.scheduleMeeting);
 router.patch('/meetings/:id/minutes', (0, authorize_js_1.requirePermission)(permissions_js_1.PERMISSIONS.COMMITTEE_MANAGE), committee_controller_js_1.CommitteeController.updateMinutes);

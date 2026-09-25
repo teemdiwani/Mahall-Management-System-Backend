@@ -223,6 +223,33 @@ class MadrasaController {
             next(error);
         }
     }
+    static async createRazorpayOrder(req, res, next) {
+        try {
+            const orderData = await madrasa_service_js_1.MadrasaService.createFeeRazorpayOrder(req.params.id);
+            return apiResponse_js_1.ApiResponse.success(res, orderData, 200, 'Razorpay order created for tuition fee');
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+    static async verifyRazorpayPayment(req, res, next) {
+        try {
+            const result = await madrasa_service_js_1.MadrasaService.verifyFeeRazorpayPayment(req.params.id, req.body, req.user?._id?.toString());
+            return apiResponse_js_1.ApiResponse.success(res, result, 200, 'Tuition fee payment verified successfully');
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+    static async getFeeInvoice(req, res, next) {
+        try {
+            const invoice = await madrasa_service_js_1.MadrasaService.getFeeInvoice(req.params.id);
+            return apiResponse_js_1.ApiResponse.success(res, invoice);
+        }
+        catch (error) {
+            next(error);
+        }
+    }
     // ─── Student Attendance ───────────────────────────────────────────────────
     static async listAttendance(req, res, next) {
         try {

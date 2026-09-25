@@ -45,12 +45,22 @@ const paymentSchema = new mongoose_1.Schema({
     familyId: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'Family',
-        required: true,
+        required: false,
         index: true,
     },
     memberId: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'Member',
+        index: true,
+    },
+    studentId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'MadrasaStudent',
+        index: true,
+    },
+    madrasaFeeId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'MadrasaFee',
         index: true,
     },
     amount: {
@@ -64,7 +74,7 @@ const paymentSchema = new mongoose_1.Schema({
     },
     type: {
         type: String,
-        enum: ['MONTHLY', 'DONATION', 'ZAKAT', 'FITRAH', 'EVENT', 'OTHER'],
+        enum: ['MONTHLY', 'DONATION', 'ZAKAT', 'FITRAH', 'IFTAR', 'EVENT', 'TUITION', 'OTHER'],
         default: 'MONTHLY',
         index: true,
     },
@@ -96,6 +106,14 @@ const paymentSchema = new mongoose_1.Schema({
     },
     paidAt: {
         type: Date,
+    },
+    razorpayOrderId: {
+        type: String,
+        index: true,
+    },
+    razorpayPaymentId: {
+        type: String,
+        index: true,
     },
 }, {
     timestamps: true,

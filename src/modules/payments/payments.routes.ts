@@ -15,6 +15,7 @@ router.get('/my-payments', PaymentsController.getMyPayments);
 router.post('/trigger-28th-dues', PaymentsController.trigger28thDues);
 
 // Razorpay Online Payment Integration
+router.post('/contribute-online', PaymentsController.contributeOnline);
 router.post('/:id/razorpay-order', PaymentsController.createRazorpayOrder);
 router.post('/:id/verify-razorpay', PaymentsController.verifyRazorpayPayment);
 

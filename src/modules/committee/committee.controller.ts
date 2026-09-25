@@ -12,6 +12,24 @@ export class CommitteeController {
     }
   }
 
+  static async createMember(req: Request, res: Response, next: NextFunction) {
+    try {
+      const member = await CommitteeService.createMember(req.body);
+      return ApiResponse.success(res, member, 201, 'Committee member added');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async deleteMember(req: Request, res: Response, next: NextFunction) {
+    try {
+      await CommitteeService.deleteMember(req.params.id as string);
+      return ApiResponse.success(res, null, 200, 'Committee member removed');
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async listMeetings(_req: Request, res: Response, next: NextFunction) {
     try {
       const meetings = await CommitteeService.listMeetings();

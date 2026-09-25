@@ -43,6 +43,9 @@ router.delete('/results/:id', requirePermission(PERMISSIONS.MADRASA_GRADES), Mad
 router.get('/fees', MadrasaController.listFees);
 router.post('/fees', requirePermission(PERMISSIONS.MADRASA_MANAGE), MadrasaController.recordFeePayment);
 router.patch('/fees/:id', requirePermission(PERMISSIONS.MADRASA_MANAGE), MadrasaController.updateFeeStatus);
+router.post('/fees/:id/razorpay-order', MadrasaController.createRazorpayOrder);
+router.post('/fees/:id/verify-razorpay', MadrasaController.verifyRazorpayPayment);
+router.get('/fees/:id/invoice', MadrasaController.getFeeInvoice);
 
 // ─── Student Attendance ─────────────────────────────────────────────────────
 router.get('/attendance', MadrasaController.listAttendance);

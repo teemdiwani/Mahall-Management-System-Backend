@@ -16,8 +16,64 @@ class PaymentsController {
     }
     static async getMyPayments(req, res, next) {
         try {
-            const payments = await payments_service_js_1.PaymentsService.getMyPayments(req.user._id.toString());
+            const payments = await payments_service_js_1.PaymentsService.getMyPayments(req.user._id.toString(), req.user?.email, req.user?.phone);
             return apiResponse_js_1.ApiResponse.success(res, payments);
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+    static async createRazorpayOrder(req, res, next) {
+        try {
+            const orderData = await payments_service_js_1.PaymentsService.createRazorpayOrder(req.params.id);
+            return apiResponse_js_1.ApiResponse.success(res, orderData, 200, 'Razorpay order created');
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+    static async contributeOnline(req, res, next) {
+        try {
+            const { amount, type, donorName, phone, notes } = req.body;
+            const orderData = await payments_service_js_1.PaymentsService.createOnlineContribution({
+                amount: Number(amount),
+                type,
+                donorName,
+                phone,
+                notes,
+                userId: req.user?._id?.toString(),
+                userEmail: req.user?.email,
+                userPhone: req.user?.phone,
+            });
+            return apiResponse_js_1.ApiResponse.success(res, orderData, 201, 'Online contribution initiated');
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+    static async verifyRazorpayPayment(req, res, next) {
+        try {
+            const payment = await payments_service_js_1.PaymentsService.verifyRazorpayPayment(req.params.id, req.body, req.user?._id?.toString());
+            await (0, auditLogger_js_1.logAudit)(req, 'RAZORPAY_PAYMENT_VERIFIED', 'Payment', payment._id.toString(), { status: 'PENDING' }, { status: 'PAID', receiptNumber: payment.receiptNumber, razorpayPaymentId: payment.razorpayPaymentId });
+            return apiResponse_js_1.ApiResponse.success(res, payment, 200, 'Payment verified successfully');
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+    static async getInvoice(req, res, next) {
+        try {
+            const invoice = await payments_service_js_1.PaymentsService.getPaymentInvoice(req.params.id);
+            return apiResponse_js_1.ApiResponse.success(res, invoice);
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+    static async trigger28thDues(req, res, next) {
+        try {
+            const result = await payments_service_js_1.PaymentsService.checkAndTriggerMonthlyDues(new Date());
+            return apiResponse_js_1.ApiResponse.success(res, result, 200, 'Monthly dues check executed');
         }
         catch (error) {
             next(error);

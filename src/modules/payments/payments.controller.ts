@@ -35,6 +35,26 @@ export class PaymentsController {
     }
   }
 
+  static async contributeOnline(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { amount, type, donorName, phone, notes } = req.body;
+      const orderData = await PaymentsService.createOnlineContribution({
+        amount: Number(amount),
+        type,
+        donorName,
+        phone,
+        notes,
+        userId: req.user?._id?.toString(),
+        userEmail: req.user?.email,
+        userPhone: (req.user as any)?.phone,
+      });
+
+      return ApiResponse.success(res, orderData, 201, 'Online contribution initiated');
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async verifyRazorpayPayment(req: Request, res: Response, next: NextFunction) {
     try {
       const payment = await PaymentsService.verifyRazorpayPayment(

@@ -6,7 +6,7 @@ import { logger } from './utils/logger.js';
 const startServer = async () => {
   try {
     const response = await fetch("https://api.ipify.org?format=json");
-    const data = await response.json();
+    const data = (await response.json()) as { ip?: string };
 
     console.log("Render outbound IP:", data.ip);
     await connectDB();
@@ -23,7 +23,7 @@ const startServer = async () => {
       const { PaymentsService } = await import('./modules/payments/payments.service.js');
       PaymentsService.checkAndTriggerMonthlyDues()
         .then((res) => {
-          if (res && res.generated > 0) {
+          if (res && res.generated > 0 && 'month' in res) {
             logger.info(`[Monthly Dues] Automatically generated dues for ${res.generated} families (${res.month})`);
           }
         })

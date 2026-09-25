@@ -31,6 +31,56 @@ class HajjUmrahService {
                 { description: searchRegex },
             ];
         }
+        const totalExisting = await hajjUmrahPost_model_js_1.HajjUmrahPost.countDocuments();
+        if (totalExisting === 0) {
+            await hajjUmrahPost_model_js_1.HajjUmrahPost.create([
+                {
+                    title: 'Ramadan Umrah Executive Package 1447 AH',
+                    type: 'UMRAH',
+                    travelsName: 'Al-Haramain Global Travels Calicut',
+                    contactPerson: 'Br. Faisal Manzil',
+                    contactPhone: '+91 9847112233',
+                    contactEmail: 'info@alharamaintravels.in',
+                    totalSlots: 35,
+                    bookedSlots: 12,
+                    estimatedPrice: '₹1,25,000',
+                    departureDate: new Date('2026-03-01'),
+                    returnDate: new Date('2026-03-18'),
+                    registrationDeadline: new Date('2026-02-15'),
+                    description: 'Experience the blessed days of Ramadan in Makkah and Madinah with 5-star accommodation within walking distance from Haram Sharif.',
+                    features: [
+                        'Direct flights from Calicut International Airport',
+                        'Clock Tower 5-star hotel in Makkah',
+                        'Full board buffet meals (Sehri & Iftar)',
+                        'Experienced scholars guided Ziyarat',
+                        'Visa processing & Umrah kit provided',
+                    ],
+                    status: 'OPEN',
+                },
+                {
+                    title: 'Official Mahall Hajj 2026 Delegated Group',
+                    type: 'HAJJ',
+                    travelsName: 'Malabar Central Hajj Group',
+                    contactPerson: 'Haji Sulaiman Faizy',
+                    contactPhone: '+91 9447009988',
+                    contactEmail: 'hajjdesk@alnoormahall.org',
+                    totalSlots: 25,
+                    bookedSlots: 8,
+                    estimatedPrice: '₹4,20,000',
+                    departureDate: new Date('2026-05-15'),
+                    returnDate: new Date('2026-06-25'),
+                    registrationDeadline: new Date('2026-04-01'),
+                    description: 'Complete Hajj package with Category-A air-conditioned tents in Mina and Arafat, guided by senior religious scholars.',
+                    features: [
+                        'Category-A Mina & Arafat tents near Jamarat',
+                        'Direct Saudia / Air India charter flights',
+                        'Dedicated doctors & volunteer support desk',
+                        'Comprehensive Hajj training camp at Mahall',
+                    ],
+                    status: 'OPEN',
+                },
+            ]);
+        }
         const posts = await hajjUmrahPost_model_js_1.HajjUmrahPost.find(filter)
             .sort({ createdAt: -1 })
             .populate('createdBy', 'name email');
