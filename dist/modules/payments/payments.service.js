@@ -184,8 +184,8 @@ class PaymentsService {
         if (payment.status === 'PAID') {
             throw apiError_js_1.ApiError.badRequest('This payment has already been completed and verified');
         }
-        const keyId = env_js_1.env.RAZORPAY_KEY_ID || 'rzp_test_SWHZJrawTUZSq9';
-        const keySecret = env_js_1.env.RAZORPAY_KEY_SECRET || 'uSpgWfpwaudLUiVPyHTZsLo7';
+        const keyId = env_js_1.env.RAZORPAY_KEY_ID || 'rzp_test_TgVDlY3IsjDcYp';
+        const keySecret = env_js_1.env.RAZORPAY_KEY_SECRET || '6OTIZgl34SR0qj7S6x0PUO1t';
         const razorpay = new razorpay_1.default({
             key_id: keyId,
             key_secret: keySecret,
@@ -279,7 +279,7 @@ class PaymentsService {
         if (payment.status === 'PAID') {
             return payment;
         }
-        const keySecret = env_js_1.env.RAZORPAY_KEY_SECRET || 'uSpgWfpwaudLUiVPyHTZsLo7';
+        const keySecret = env_js_1.env.RAZORPAY_KEY_SECRET || '6OTIZgl34SR0qj7S6x0PUO1t';
         // Verify HMAC-SHA256 signature
         const body = `${data.razorpay_order_id}|${data.razorpay_payment_id}`;
         const expectedSignature = crypto_1.default.createHmac('sha256', keySecret).update(body).digest('hex');

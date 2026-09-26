@@ -455,8 +455,8 @@ class MadrasaService {
         if (fee.status === 'PAID') {
             throw apiError_js_1.ApiError.badRequest('This tuition fee has already been paid and verified');
         }
-        const keyId = env_js_1.env.RAZORPAY_KEY_ID || 'rzp_test_SWHZJrawTUZSq9';
-        const keySecret = env_js_1.env.RAZORPAY_KEY_SECRET || 'uSpgWfpwaudLUiVPyHTZsLo7';
+        const keyId = env_js_1.env.RAZORPAY_KEY_ID || 'rzp_test_TgVDlY3IsjDcYp';
+        const keySecret = env_js_1.env.RAZORPAY_KEY_SECRET || '6OTIZgl34SR0qj7S6x0PUO1t';
         const razorpay = new razorpay_1.default({
             key_id: keyId,
             key_secret: keySecret,
@@ -502,7 +502,7 @@ class MadrasaService {
         if (fee.status === 'PAID') {
             return { fee, payment: await payment_model_js_1.Payment.findOne({ madrasaFeeId: fee._id }) };
         }
-        const keySecret = env_js_1.env.RAZORPAY_KEY_SECRET || 'uSpgWfpwaudLUiVPyHTZsLo7';
+        const keySecret = env_js_1.env.RAZORPAY_KEY_SECRET || '6OTIZgl34SR0qj7S6x0PUO1t';
         // Verify HMAC-SHA256 signature
         const body = `${data.razorpay_order_id}|${data.razorpay_payment_id}`;
         const expectedSignature = crypto_1.default.createHmac('sha256', keySecret).update(body).digest('hex');

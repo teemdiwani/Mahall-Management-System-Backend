@@ -503,8 +503,8 @@ export class MadrasaService {
       throw ApiError.badRequest('This tuition fee has already been paid and verified');
     }
 
-    const keyId = env.RAZORPAY_KEY_ID || 'rzp_test_SWHZJrawTUZSq9';
-    const keySecret = env.RAZORPAY_KEY_SECRET || 'uSpgWfpwaudLUiVPyHTZsLo7';
+    const keyId = env.RAZORPAY_KEY_ID || 'rzp_test_TgVDlY3IsjDcYp';
+    const keySecret = env.RAZORPAY_KEY_SECRET || '6OTIZgl34SR0qj7S6x0PUO1t';
 
     const razorpay = new Razorpay({
       key_id: keyId,
@@ -567,7 +567,7 @@ export class MadrasaService {
       return { fee, payment: await Payment.findOne({ madrasaFeeId: fee._id }) };
     }
 
-    const keySecret = env.RAZORPAY_KEY_SECRET || 'uSpgWfpwaudLUiVPyHTZsLo7';
+    const keySecret = env.RAZORPAY_KEY_SECRET || '6OTIZgl34SR0qj7S6x0PUO1t';
 
     // Verify HMAC-SHA256 signature
     const body = `${data.razorpay_order_id}|${data.razorpay_payment_id}`;

@@ -204,8 +204,8 @@ export class PaymentsService {
       throw ApiError.badRequest('This payment has already been completed and verified');
     }
 
-    const keyId = env.RAZORPAY_KEY_ID || 'rzp_test_SWHZJrawTUZSq9';
-    const keySecret = env.RAZORPAY_KEY_SECRET || 'uSpgWfpwaudLUiVPyHTZsLo7';
+    const keyId = env.RAZORPAY_KEY_ID || 'rzp_test_TgVDlY3IsjDcYp';
+    const keySecret = env.RAZORPAY_KEY_SECRET || '6OTIZgl34SR0qj7S6x0PUO1t';
 
     const razorpay = new Razorpay({
       key_id: keyId,
@@ -280,10 +280,10 @@ export class PaymentsService {
       data.type === 'ZAKAT'
         ? 'ZKT'
         : data.type === 'FITRAH'
-        ? 'FTR'
-        : data.type === 'IFTAR'
-        ? 'IFT'
-        : 'DON';
+          ? 'FTR'
+          : data.type === 'IFTAR'
+            ? 'IFT'
+            : 'DON';
     const paymentNumber = `PAY-${typePrefix}-${Date.now().toString().slice(-6)}-${Math.floor(
       100 + Math.random() * 900
     )}`;
@@ -328,7 +328,7 @@ export class PaymentsService {
       return payment;
     }
 
-    const keySecret = env.RAZORPAY_KEY_SECRET || 'uSpgWfpwaudLUiVPyHTZsLo7';
+    const keySecret = env.RAZORPAY_KEY_SECRET || '6OTIZgl34SR0qj7S6x0PUO1t';
 
     // Verify HMAC-SHA256 signature
     const body = `${data.razorpay_order_id}|${data.razorpay_payment_id}`;

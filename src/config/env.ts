@@ -12,8 +12,8 @@ const envSchema = z.object({
   COOKIE_SECRET: z.string().default('mahall_cookie_secret_key_default'),
   CLIENT_URL: z.string().default('http://localhost:5173'),
   SERVER_URL: z.string().default('http://localhost:5000'),
-  GOOGLE_CLIENT_ID: z.string().optional().default(''),
-  GOOGLE_CLIENT_SECRET: z.string().optional().default(''),
+  GOOGLE_CLIENT_ID: z.string().optional().default('').transform((s) => s.trim()),
+  GOOGLE_CLIENT_SECRET: z.string().optional().default('').transform((s) => s.trim()),
   SMTP_HOST: z.string().optional().default('smtp.gmail.com'),
   SMTP_PORT: z.string().default('465').transform(Number),
   SMTP_USER: z.string().optional().default('teemdiwani@gmail.com'),
@@ -21,8 +21,8 @@ const envSchema = z.object({
   GMAIL_APP_PASSWORD: z.string().optional().default(''),
   SMTP_SECURE: z.string().optional().default('true').transform(val => val === 'true'),
   SMTP_FROM: z.string().optional().default('MahallConnect <teemdiwani@gmail.com>'),
-  RAZORPAY_KEY_ID: z.string().optional().default('rzp_test_SWHZJrawTUZSq9'),
-  RAZORPAY_KEY_SECRET: z.string().optional().default('uSpgWfpwaudLUiVPyHTZsLo7'),
+  RAZORPAY_KEY_ID: z.string().optional().default('rzp_test_TgVDlY3IsjDcYp'),
+  RAZORPAY_KEY_SECRET: z.string().optional().default('6OTIZgl34SR0qj7S6x0PUO1t'),
 });
 
 const parsed = envSchema.safeParse(process.env);
