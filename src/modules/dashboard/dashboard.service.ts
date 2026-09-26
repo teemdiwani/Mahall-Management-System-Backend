@@ -39,10 +39,11 @@ export class DashboardService {
       Expense.find(),
     ]);
 
-    // Financial aggregates
-    const expectedCollection = totalFamilies * 250;
+    // Financial aggregates from real MongoDB data
+    const activeFamiliesList = await Family.find({ status: 'ACTIVE' }, 'monthlyContribution');
+    const expectedCollection = activeFamiliesList.reduce((sum, f) => sum + (f.monthlyContribution || 250), 0);
     const monthlyCollected = allPayments
-      .filter((p) => p.month === currentMonth && p.type === 'MONTHLY')
+      .filter((p) => p.type === 'MONTHLY' && (p.month === currentMonth || (p.paidAt && new Date(p.paidAt).toISOString().slice(0, 7) === currentMonth)))
       .reduce((sum, p) => sum + p.amount, 0);
     const pendingMonthly = Math.max(0, expectedCollection - monthlyCollected);
     const totalDonations = allPayments

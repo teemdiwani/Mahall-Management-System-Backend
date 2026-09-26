@@ -27,7 +27,7 @@ const expenseSchema = new Schema<IExpense>(
     },
     category: {
       type: String,
-      enum: ['UTILITIES', 'MAINTENANCE', 'SALARIES', 'WELFARE', 'EVENTS', 'MADRASA', 'OTHER'],
+      enum: ['UTILITIES', 'MAINTENANCE', 'SALARIES', 'SALARY', 'WELFARE', 'EVENTS', 'MADRASA', 'FOOD', 'CONSTRUCTION', 'MISCELLANEOUS', 'OTHER'],
       required: true,
       index: true,
     },

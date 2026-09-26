@@ -55,13 +55,23 @@ class FinanceService {
         ]);
         return {
             currentMonth,
+            totalIncome,
+            collectedMonthly,
+            pendingMonthly,
+            expectedCollection,
+            totalExpenses,
+            balance: netBalance,
             cards: {
                 expectedCollection,
                 collected: collectedMonthly,
+                collectedMonthly,
                 pending: pendingMonthly,
+                pendingMonthly,
                 donations: totalDonations,
                 zakat: totalZakat,
+                totalIncome,
                 expenses: totalExpenses,
+                totalExpenses,
                 balance: netBalance,
             },
             charts: {
@@ -89,9 +99,17 @@ class FinanceService {
     }
     static async recordExpense(data) {
         const expenseNumber = `EXP-${Date.now().toString().slice(-6)}`;
+        const title = data.title || data.description || 'General Mahall Expense';
+        let category = (data.category || 'OTHER').toString().toUpperCase();
+        if (category === 'SALARY')
+            category = 'SALARIES';
         const expense = await expense_model_js_1.Expense.create({
-            ...data,
             expenseNumber,
+            title,
+            description: data.description || data.title,
+            category,
+            amount: Number(data.amount),
+            recordedBy: data.recordedBy,
             date: data.date || new Date(),
         });
         return expense;
