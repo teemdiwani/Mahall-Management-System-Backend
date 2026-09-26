@@ -95,15 +95,28 @@ export class AuthService {
     let payload: { email?: string; name?: string; sub?: string; picture?: string } | undefined;
 
     try {
-      if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_ID.length > 5) {
+      // 1. Explicit dev mock bypass for testing without Google Cloud connectivity
+      if (env.NODE_ENV === 'development' && credential.startsWith('mock-dev-token:')) {
+        const jsonStr = Buffer.from(credential.replace('mock-dev-token:', ''), 'base64').toString('utf-8');
+        const decoded = JSON.parse(jsonStr || '{}');
+        payload = {
+          email: decoded.email || 'googleuser@mahallconnect.org',
+          name: decoded.name || 'Google User',
+          sub: decoded.sub || 'google-sub-mock-id',
+          picture: decoded.picture || '',
+        };
+      } else if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_ID.length > 5) {
+        // 2. Real Google OAuth ID Token verification
         const ticket = await googleClient.verifyIdToken({
           idToken: credential,
           audience: env.GOOGLE_CLIENT_ID,
         });
         payload = ticket.getPayload();
       } else {
-        // Fallback for mock/local development token decode
-        const decoded = JSON.parse(Buffer.from(credential.split('.')[1] || '', 'base64').toString() || '{}');
+        // 3. Fallback when GOOGLE_CLIENT_ID is not configured in .env
+        const parts = credential.split('.');
+        const payloadBase64 = parts[1] || parts[0] || '';
+        const decoded = JSON.parse(Buffer.from(payloadBase64, 'base64').toString() || '{}');
         payload = {
           email: decoded.email || 'googleuser@mahallconnect.org',
           name: decoded.name || 'Google User',
@@ -111,8 +124,13 @@ export class AuthService {
           picture: decoded.picture || '',
         };
       }
-    } catch {
-      throw ApiError.badRequest('Invalid Google authentication credential');
+    } catch (err: any) {
+      console.error('❌ Google token verification error:', err?.message || err);
+      const errorMsg =
+        env.NODE_ENV === 'development' && err?.message
+          ? `Google token verification failed: ${err.message}`
+          : 'Invalid Google authentication credential';
+      throw ApiError.badRequest(errorMsg);
     }
 
     if (!payload || !payload.email) {

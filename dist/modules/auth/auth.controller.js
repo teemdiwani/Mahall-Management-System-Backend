@@ -4,6 +4,7 @@ exports.AuthController = void 0;
 const auth_service_js_1 = require("./auth.service.js");
 const apiResponse_js_1 = require("../../utils/apiResponse.js");
 const jwt_js_1 = require("../../utils/jwt.js");
+const env_js_1 = require("../../config/env.js");
 class AuthController {
     static async register(req, res, next) {
         try {
@@ -84,6 +85,11 @@ class AuthController {
         catch (error) {
             next(error);
         }
+    }
+    static async getConfig(_req, res) {
+        return apiResponse_js_1.ApiResponse.success(res, {
+            googleClientId: env_js_1.env.GOOGLE_CLIENT_ID || '',
+        }, 200, 'Auth configuration retrieved');
     }
 }
 exports.AuthController = AuthController;

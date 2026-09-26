@@ -38,8 +38,13 @@ import auditLogsRoutes from './modules/auditLogs/auditLogs.routes.js';
 export const createApp = (): Express => {
   const app = express();
 
-  // Security Headers
-  app.use(helmet());
+  // Security Headers (configured to allow Google OAuth popup)
+  app.use(
+    helmet({
+      crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    })
+  );
 
   // CORS Configuration
   app.use(

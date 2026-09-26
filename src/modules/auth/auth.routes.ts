@@ -58,5 +58,6 @@ router.post(
 
 router.get('/me', authenticate, AuthController.getMe);
 router.post('/logout', AuthController.logout);
+router.get('/config', AuthController.getConfig);
 
 export default router;

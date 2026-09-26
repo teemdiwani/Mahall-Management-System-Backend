@@ -40,8 +40,11 @@ const reports_routes_js_1 = __importDefault(require("./modules/reports/reports.r
 const auditLogs_routes_js_1 = __importDefault(require("./modules/auditLogs/auditLogs.routes.js"));
 const createApp = () => {
     const app = (0, express_1.default)();
-    // Security Headers
-    app.use((0, helmet_1.default)());
+    // Security Headers (configured to allow Google OAuth popup)
+    app.use((0, helmet_1.default)({
+        crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+        crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }));
     // CORS Configuration
     app.use((0, cors_1.default)({
         origin: [env_js_1.env.CLIENT_URL, 'http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5174', 'http://127.0.0.1:5174'],

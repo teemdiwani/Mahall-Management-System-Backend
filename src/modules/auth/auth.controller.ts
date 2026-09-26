@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { AuthService } from './auth.service.js';
 import { ApiResponse } from '../../utils/apiResponse.js';
 import { getCookieOptions } from '../../utils/jwt.js';
+import { env } from '../../config/env.js';
 
 export class AuthController {
   static async register(req: Request, res: Response, next: NextFunction) {
@@ -82,5 +83,16 @@ export class AuthController {
     } catch (error) {
       next(error);
     }
+  }
+
+  static async getConfig(_req: Request, res: Response) {
+    return ApiResponse.success(
+      res,
+      {
+        googleClientId: env.GOOGLE_CLIENT_ID || '',
+      },
+      200,
+      'Auth configuration retrieved'
+    );
   }
 }

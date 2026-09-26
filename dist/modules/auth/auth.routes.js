@@ -15,4 +15,5 @@ router.post('/verify-reset-otp', rateLimiter_js_1.authLimiter, (0, validate_js_1
 router.post('/reset-password', rateLimiter_js_1.authLimiter, (0, validate_js_1.validateRequest)({ body: auth_validation_js_1.resetPasswordSchema }), auth_controller_js_1.AuthController.resetPassword);
 router.get('/me', auth_js_1.authenticate, auth_controller_js_1.AuthController.getMe);
 router.post('/logout', auth_controller_js_1.AuthController.logout);
+router.get('/config', auth_controller_js_1.AuthController.getConfig);
 exports.default = router;
