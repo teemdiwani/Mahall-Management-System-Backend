@@ -58,20 +58,6 @@ router.post(
 
 router.get('/me', authenticate, AuthController.getMe);
 router.post('/logout', AuthController.logout);
-
-router.get('/debug-smtp', async (_req, res) => {
-  try {
-    const { mailService } = await import('../../utils/mailService.js');
-    const result = await mailService.sendPasswordResetOtpEmail({
-      email: 'nafihkottankodan@gmail.com',
-      name: 'Nafi (Debug Test)',
-      otp: '999888',
-    });
-    res.json({ debug: true, result });
-  } catch (err: any) {
-    res.status(500).json({ debug: false, error: err.message, stack: err.stack });
-  }
-});
 router.get('/config', AuthController.getConfig);
 
 export default router;
