@@ -200,7 +200,7 @@ class AuthService {
         user.passwordResetOtp = otp;
         user.passwordResetExpires = expires;
         await user.save();
-        const mailRes = await mailService_js_1.mailService.sendPasswordResetOtpEmail({
+        await mailService_js_1.mailService.sendPasswordResetOtpEmail({
             email: user.email,
             name: user.name,
             otp,
@@ -208,8 +208,6 @@ class AuthService {
         return {
             email: user.email,
             message: 'A 6-digit verification code has been sent to your email.',
-            simulated: mailRes?.simulated,
-            ...(process.env.NODE_ENV !== 'production' || mailRes?.simulated ? { devOtp: otp } : {}),
         };
     }
     static async verifyResetOtp(email, otp) {

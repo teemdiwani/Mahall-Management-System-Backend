@@ -226,7 +226,7 @@ export class AuthService {
     user.passwordResetExpires = expires;
     await user.save();
 
-    const mailRes = await mailService.sendPasswordResetOtpEmail({
+    await mailService.sendPasswordResetOtpEmail({
       email: user.email,
       name: user.name,
       otp,
@@ -235,8 +235,6 @@ export class AuthService {
     return {
       email: user.email,
       message: 'A 6-digit verification code has been sent to your email.',
-      simulated: mailRes?.simulated,
-      ...(process.env.NODE_ENV !== 'production' || mailRes?.simulated ? { devOtp: otp } : {}),
     };
   }
 
