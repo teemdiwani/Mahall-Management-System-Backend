@@ -9,6 +9,7 @@ import { ApiError } from '../../utils/apiError.js';
 import { generateToken } from '../../utils/jwt.js';
 import { env } from '../../config/env.js';
 import { mailService } from '../../utils/mailService.js';
+import { logger } from '../../utils/logger.js';
 
 const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID);
 
@@ -226,11 +227,18 @@ export class AuthService {
     user.passwordResetExpires = expires;
     await user.save();
 
-    await mailService.sendPasswordResetOtpEmail({
+    const mailRes = await mailService.sendPasswordResetOtpEmail({
       email: user.email,
       name: user.name,
       otp,
     });
+
+    if (!mailRes.success) {
+      logger.error({ mailRes }, '❌ Failed to dispatch password reset OTP email');
+      throw ApiError.internal(
+        `Failed to send email: ${mailRes.error || 'Mail delivery timeout or authentication issue'}`
+      );
+    }
 
     return {
       email: user.email,

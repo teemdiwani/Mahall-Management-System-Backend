@@ -14,6 +14,7 @@ const apiError_js_1 = require("../../utils/apiError.js");
 const jwt_js_1 = require("../../utils/jwt.js");
 const env_js_1 = require("../../config/env.js");
 const mailService_js_1 = require("../../utils/mailService.js");
+const logger_js_1 = require("../../utils/logger.js");
 const googleClient = new google_auth_library_1.OAuth2Client(env_js_1.env.GOOGLE_CLIENT_ID);
 class AuthService {
     static async register(data) {
@@ -200,11 +201,15 @@ class AuthService {
         user.passwordResetOtp = otp;
         user.passwordResetExpires = expires;
         await user.save();
-        await mailService_js_1.mailService.sendPasswordResetOtpEmail({
+        const mailRes = await mailService_js_1.mailService.sendPasswordResetOtpEmail({
             email: user.email,
             name: user.name,
             otp,
         });
+        if (!mailRes.success) {
+            logger_js_1.logger.error({ mailRes }, '❌ Failed to dispatch password reset OTP email');
+            throw apiError_js_1.ApiError.internal(`Failed to send email: ${mailRes.error || 'Mail delivery timeout or authentication issue'}`);
+        }
         return {
             email: user.email,
             message: 'A 6-digit verification code has been sent to your email.',

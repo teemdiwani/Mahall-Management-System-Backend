@@ -273,7 +273,7 @@ Mahallu Management Committee Office
     email: string;
     name?: string;
     otp: string;
-  }): Promise<{ success: boolean; messageId?: string; simulated?: boolean }> {
+  }): Promise<{ success: boolean; messageId?: string; simulated?: boolean; error?: string }> {
     const sender = env.SMTP_FROM || 'MahallConnect <teemdiwani@gmail.com>';
     const subject = `🔐 ${data.otp} is your MahallConnect Password Reset Code`;
 
@@ -362,10 +362,10 @@ Mahallu Management Team
           `✅ 6-digit OTP email dispatched successfully via Nodemailer to ${data.email}`
         );
         return { success: true, messageId: info.messageId, simulated: false };
-      } catch (error) {
+      } catch (error: any) {
         logger.error({ error }, '❌ Error sending OTP email via Nodemailer');
         logger.info(`🔑 [FALLBACK OTP LOG] Recipient: ${data.email} | OTP: ${data.otp}`);
-        return { success: false, simulated: false };
+        return { success: false, simulated: false, error: error?.message || String(error) };
       }
     } else {
       // In development or when Google App Password is not yet set in .env

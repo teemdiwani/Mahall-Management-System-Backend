@@ -319,7 +319,7 @@ Mahallu Management Team
             catch (error) {
                 logger_js_1.logger.error({ error }, '❌ Error sending OTP email via Nodemailer');
                 logger_js_1.logger.info(`🔑 [FALLBACK OTP LOG] Recipient: ${data.email} | OTP: ${data.otp}`);
-                return { success: false, simulated: false };
+                return { success: false, simulated: false, error: error?.message || String(error) };
             }
         }
         else {
