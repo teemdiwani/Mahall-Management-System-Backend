@@ -14,28 +14,25 @@ class MailService {
         this.initTransporter();
     }
     initTransporter() {
-        const user = env_js_1.env.SMTP_USER || 'teemdiwani@gmail.com';
+        const user = env_js_1.env.SMTP_USER || process.env.EMAIL_USER || 'teemdiwani@gmail.com';
         const rawPass = env_js_1.env.SMTP_PASS ||
             env_js_1.env.GMAIL_APP_PASSWORD ||
+            process.env.EMAIL_PASS ||
             process.env.SMTP_PASS ||
             process.env.GMAIL_APP_PASSWORD ||
             'wdgpciybjxroiyat';
         const pass = rawPass.replace(/\s+/g, '');
         try {
+            // Nodemailer native preferred 'service: gmail' transporter for Node applications
             this.transporter = nodemailer_1.default.createTransport({
-                host: 'smtp.gmail.com',
-                port: 465,
-                secure: true,
+                service: 'gmail',
                 auth: {
                     user,
                     pass,
                 },
-                connectionTimeout: 10000,
-                greetingTimeout: 5000,
-                socketTimeout: 15000,
             });
             this.isConfigured = true;
-            logger_js_1.logger.info(`📧 Nodemailer configured for Gmail (${user}) via port 465 SSL`);
+            logger_js_1.logger.info(`📧 Nodemailer preferred Gmail service configured for ${user}`);
         }
         catch (err) {
             logger_js_1.logger.error({ err }, '❌ Failed to initialize Nodemailer Gmail transporter');
