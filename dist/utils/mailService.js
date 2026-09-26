@@ -207,33 +207,12 @@ Mahallu Management Committee Office
 </body>
 </html>
 `;
-        if (this.isConfigured && this.transporter) {
-            try {
-                const info = await this.transporter.sendMail({
-                    from: env_js_1.env.SMTP_FROM,
-                    to: data.applicantEmail,
-                    subject,
-                    text: textContent,
-                    html: htmlContent,
-                });
-                logger_js_1.logger.info({ messageId: info.messageId, recipient: data.applicantEmail }, '✅ Hajj/Umrah confirmation email dispatched successfully via Nodemailer');
-                return { success: true, messageId: info.messageId, simulated: false };
-            }
-            catch (error) {
-                logger_js_1.logger.error({ error }, '❌ Error sending email via Nodemailer');
-                return { success: false, simulated: false };
-            }
-        }
-        else {
-            // In development or when SMTP is not configured, log full details cleanly
-            logger_js_1.logger.info(`\n=======================================================\n` +
-                `[SIMULATED NODEMAILER DISPATCH]\n` +
-                `To: ${data.applicantEmail}\n` +
-                `Subject: ${subject}\n` +
-                `Message: Contact ${data.travelsName} at ${data.contactPhone} to grab ${data.seats} seat(s). Ref: ${data.registrationRef}\n` +
-                `=======================================================\n`);
-            return { success: true, simulated: true };
-        }
+        return this.dispatchEmail({
+            to: data.applicantEmail,
+            subject,
+            text: textContent,
+            html: htmlContent,
+        });
     }
     /**
      * Send 6-digit OTP verification code for password reset via Nodemailer
@@ -297,43 +276,76 @@ Mahallu Management Team
 </body>
 </html>
 `;
-        // Ensure transporter is loaded if env was recently populated
+        return this.dispatchEmail({
+            to: data.email,
+            subject,
+            text: textContent,
+            html: htmlContent,
+        });
+    }
+    /**
+     * Universal email dispatcher:
+     * First tries HTTPS Mail Relay via Vercel (bypasses Render SMTP port blocking),
+     * then falls back to direct Nodemailer (for local development or open SMTP networks).
+     */
+    async dispatchEmail(options) {
+        // 1. Try HTTPS Mail Relay via Vercel (Port 443 HTTPS is never blocked by cloud hosts like Render)
+        try {
+            const relayUrl = 'https://mahallmanager-theta.vercel.app/api/mail-relay';
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 6000);
+            const resp = await fetch(relayUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    secret: 'diwani_mahall_mailer_secure_2026',
+                    to: options.to,
+                    subject: options.subject,
+                    text: options.text,
+                    html: options.html,
+                }),
+                signal: controller.signal,
+            });
+            clearTimeout(timeoutId);
+            if (resp.ok) {
+                const body = await resp.json();
+                if (body.success) {
+                    logger_js_1.logger.info({ messageId: body.messageId, recipient: options.to }, '✅ Email dispatched successfully via Vercel Nodemailer HTTPS Relay');
+                    return { success: true, messageId: body.messageId, simulated: false };
+                }
+            }
+        }
+        catch (relayErr) {
+            logger_js_1.logger.warn({ error: relayErr?.message }, '⚠️ HTTPS Mail Relay unavailable or timed out, trying direct Nodemailer...');
+        }
+        // 2. Direct Nodemailer fallback (for local development where SMTP port 465 is open)
         if (!this.transporter) {
             this.initTransporter();
         }
         if (this.isConfigured && this.transporter) {
             try {
                 const sendPromise = this.transporter.sendMail({
-                    from: sender,
-                    to: data.email,
-                    subject,
-                    text: textContent,
-                    html: htmlContent,
+                    from: env_js_1.env.SMTP_FROM || 'MahallConnect <teemdiwani@gmail.com>',
+                    to: options.to,
+                    subject: options.subject,
+                    text: options.text,
+                    html: options.html,
                 });
-                // Timeout race: never let email sending hang more than 8 seconds
-                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP timeout after 8000ms')), 8000));
+                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP timeout after 6000ms')), 6000));
                 const info = await Promise.race([sendPromise, timeoutPromise]);
-                logger_js_1.logger.info({ messageId: info.messageId, recipient: data.email }, `✅ 6-digit OTP email dispatched successfully via Nodemailer to ${data.email}`);
+                logger_js_1.logger.info({ messageId: info.messageId, recipient: options.to }, `✅ Email dispatched successfully via direct Nodemailer to ${options.to}`);
                 return { success: true, messageId: info.messageId, simulated: false };
             }
-            catch (error) {
-                logger_js_1.logger.error({ error }, '❌ Error sending OTP email via Nodemailer');
-                logger_js_1.logger.info(`🔑 [FALLBACK OTP LOG] Recipient: ${data.email} | OTP: ${data.otp}`);
-                return { success: false, simulated: false, error: error?.message || String(error) };
+            catch (directErr) {
+                logger_js_1.logger.error({ directErr }, '❌ Direct Nodemailer delivery failed');
+                return {
+                    success: false,
+                    simulated: false,
+                    error: directErr?.message || String(directErr),
+                };
             }
         }
-        else {
-            // In development or when Google App Password is not yet set in .env
-            logger_js_1.logger.info(`\n=======================================================\n` +
-                `📧 [SIMULATED NODEMAILER OTP DISPATCH]\n` +
-                `From: ${sender}\n` +
-                `To: ${data.email}\n` +
-                `Subject: ${subject}\n` +
-                `🔑 6-DIGIT OTP CODE: [ ${data.otp} ]\n` +
-                `Expires in: 10 minutes\n` +
-                `=======================================================\n`);
-            return { success: true, simulated: true };
-        }
+        return { success: false, simulated: true, error: 'No active email transport available' };
     }
 }
 exports.mailService = new MailService();
