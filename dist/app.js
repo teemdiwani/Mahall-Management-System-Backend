@@ -47,7 +47,24 @@ const createApp = () => {
     }));
     // CORS Configuration
     app.use((0, cors_1.default)({
-        origin: [env_js_1.env.CLIENT_URL, 'http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5174', 'http://127.0.0.1:5174'],
+        origin: (requestOrigin, callback) => {
+            const allowedOrigins = [
+                env_js_1.env.CLIENT_URL,
+                'https://mahallmanager-theta.vercel.app',
+                'http://localhost:5173',
+                'http://127.0.0.1:5173',
+                'http://localhost:5174',
+                'http://127.0.0.1:5174',
+            ];
+            if (!requestOrigin)
+                return callback(null, true);
+            if (allowedOrigins.includes(requestOrigin) ||
+                requestOrigin.endsWith('.vercel.app') ||
+                requestOrigin.includes('localhost')) {
+                return callback(null, true);
+            }
+            return callback(null, true);
+        },
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
