@@ -10,6 +10,7 @@ const payment_model_js_1 = require("./payment.model.js");
 const family_model_js_1 = require("../families/family.model.js");
 const member_model_js_1 = require("../members/member.model.js");
 const notification_model_js_1 = require("../notifications/notification.model.js");
+const notifications_service_js_1 = require("../notifications/notifications.service.js");
 const apiError_js_1 = require("../../utils/apiError.js");
 const env_js_1 = require("../../config/env.js");
 class PaymentsService {
@@ -42,6 +43,13 @@ class PaymentsService {
                     paymentMethod: 'ONLINE',
                 });
                 createdCount++;
+                // Notify family members of the monthly dues
+                notifications_service_js_1.NotificationsService.notifyFamilyMembers(fam._id, {
+                    type: 'PAYMENT',
+                    title: `💳 Monthly Dues Due: ${currentMonth}`,
+                    message: `Monthly Mahall contribution of ₹${familyContribution} is now due for ${fam.name}. Payment Number: ${paymentNumber}`,
+                    link: '/app/my-payments',
+                }).catch(() => { });
             }
         }
         return { generated: createdCount, month: currentMonth };
@@ -428,6 +436,12 @@ class PaymentsService {
             notes: data.notes,
             paidAt: new Date(),
         });
+        notifications_service_js_1.NotificationsService.notifyFamilyMembers(data.familyId, {
+            type: 'PAYMENT',
+            title: 'Payment Received',
+            message: `Payment of ₹${data.amount} for ${data.month || data.type} received via ${data.paymentMethod}. Official Receipt: ${receiptNumber}`,
+            link: '/app/my-payments',
+        }).catch(() => { });
         return payment;
     }
 }

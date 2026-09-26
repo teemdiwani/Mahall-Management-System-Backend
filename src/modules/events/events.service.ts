@@ -1,5 +1,6 @@
 import { Event, type IEvent } from './event.model.js';
 import { ApiError } from '../../utils/apiError.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 
 export class EventsService {
   static async listEvents(query: { status?: string; category?: string; upcomingOnly?: boolean }) {
@@ -33,6 +34,15 @@ export class EventsService {
       createdBy: createdByUserId,
       status: 'UPCOMING',
     });
+
+    // Notify all active users
+    NotificationsService.broadcastNotification({
+      type: 'EVENT',
+      title: `🗓️ New Event: ${event.title}`,
+      message: `${event.description ? event.description.slice(0, 130) : 'Al-Noor Mahall community event'} (Date: ${event.startDate ? new Date(event.startDate).toLocaleDateString() : 'Upcoming'})`,
+      link: '/app/events',
+    }).catch(() => {});
+
     return event;
   }
 

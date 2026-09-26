@@ -4,6 +4,7 @@ import { Payment, type IPayment } from './payment.model.js';
 import { Family } from '../families/family.model.js';
 import { Member } from '../members/member.model.js';
 import { Notification } from '../notifications/notification.model.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import { ApiError } from '../../utils/apiError.js';
 import { env } from '../../config/env.js';
 
@@ -40,6 +41,14 @@ export class PaymentsService {
           paymentMethod: 'ONLINE',
         });
         createdCount++;
+
+        // Notify family members of the monthly dues
+        NotificationsService.notifyFamilyMembers(fam._id, {
+          type: 'PAYMENT',
+          title: `💳 Monthly Dues Due: ${currentMonth}`,
+          message: `Monthly Mahall contribution of ₹${familyContribution} is now due for ${fam.name}. Payment Number: ${paymentNumber}`,
+          link: '/app/my-payments',
+        }).catch(() => {});
       }
     }
 
@@ -521,6 +530,13 @@ export class PaymentsService {
       notes: data.notes,
       paidAt: new Date(),
     });
+
+    NotificationsService.notifyFamilyMembers(data.familyId, {
+      type: 'PAYMENT',
+      title: 'Payment Received',
+      message: `Payment of ₹${data.amount} for ${data.month || data.type} received via ${data.paymentMethod}. Official Receipt: ${receiptNumber}`,
+      link: '/app/my-payments',
+    }).catch(() => {});
 
     return payment;
   }

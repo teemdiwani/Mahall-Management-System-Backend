@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.EventsService = void 0;
 const event_model_js_1 = require("./event.model.js");
 const apiError_js_1 = require("../../utils/apiError.js");
+const notifications_service_js_1 = require("../notifications/notifications.service.js");
 class EventsService {
     static async listEvents(query) {
         const filter = {};
@@ -32,6 +33,13 @@ class EventsService {
             createdBy: createdByUserId,
             status: 'UPCOMING',
         });
+        // Notify all active users
+        notifications_service_js_1.NotificationsService.broadcastNotification({
+            type: 'EVENT',
+            title: `🗓️ New Event: ${event.title}`,
+            message: `${event.description ? event.description.slice(0, 130) : 'Al-Noor Mahall community event'} (Date: ${event.startDate ? new Date(event.startDate).toLocaleDateString() : 'Upcoming'})`,
+            link: '/app/events',
+        }).catch(() => { });
         return event;
     }
     static async registerForEvent(eventId, userId) {

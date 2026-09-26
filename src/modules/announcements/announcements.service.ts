@@ -1,5 +1,6 @@
 import { Announcement, type IAnnouncement } from './announcement.model.js';
 import { ROLES, type UserRole } from '../../constants/roles.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 
 export class AnnouncementsService {
   static async listAnnouncements(userRole?: UserRole) {
@@ -13,11 +14,21 @@ export class AnnouncementsService {
   }
 
   static async createAnnouncement(data: Partial<IAnnouncement>) {
-    return Announcement.create({
+    const ann = await Announcement.create({
       ...data,
       publishedAt: new Date(),
       status: 'ACTIVE',
     });
+
+    // Notify all active users
+    NotificationsService.broadcastNotification({
+      type: 'ANNOUNCEMENT',
+      title: `📢 Announcement: ${ann.title}`,
+      message: ann.content ? ann.content.slice(0, 150) : 'New Mahall announcement published.',
+      link: '/app/announcements',
+    }).catch(() => {});
+
+    return ann;
   }
 
   static async archiveAnnouncement(id: string) {
