@@ -15,26 +15,30 @@ class MailService {
     }
     initTransporter() {
         const user = env_js_1.env.SMTP_USER || 'teemdiwani@gmail.com';
-        const pass = (env_js_1.env.SMTP_PASS || env_js_1.env.GMAIL_APP_PASSWORD || process.env.GMAIL_APP_PASSWORD || '').replace(/\s+/g, '');
-        if (pass) {
-            try {
-                this.transporter = nodemailer_1.default.createTransport({
-                    service: 'gmail',
-                    auth: {
-                        user,
-                        pass,
-                    },
-                });
-                this.isConfigured = true;
-                logger_js_1.logger.info(`📧 Nodemailer configured for Gmail (${user})`);
-            }
-            catch (err) {
-                logger_js_1.logger.error({ err }, '❌ Failed to initialize Nodemailer Gmail transporter');
-                this.isConfigured = false;
-            }
+        const rawPass = env_js_1.env.SMTP_PASS ||
+            env_js_1.env.GMAIL_APP_PASSWORD ||
+            process.env.SMTP_PASS ||
+            process.env.GMAIL_APP_PASSWORD ||
+            'wdgpciybjxroiyat';
+        const pass = rawPass.replace(/\s+/g, '');
+        try {
+            this.transporter = nodemailer_1.default.createTransport({
+                host: 'smtp.gmail.com',
+                port: 465,
+                secure: true,
+                auth: {
+                    user,
+                    pass,
+                },
+                connectionTimeout: 10000,
+                greetingTimeout: 5000,
+                socketTimeout: 15000,
+            });
+            this.isConfigured = true;
+            logger_js_1.logger.info(`📧 Nodemailer configured for Gmail (${user}) via port 465 SSL`);
         }
-        else {
-            logger_js_1.logger.warn(`⚠️ Google App Password not set in .env (SMTP_PASS or GMAIL_APP_PASSWORD). Nodemailer will simulate email dispatch and log OTP to the console.`);
+        catch (err) {
+            logger_js_1.logger.error({ err }, '❌ Failed to initialize Nodemailer Gmail transporter');
             this.isConfigured = false;
         }
     }
@@ -302,13 +306,16 @@ Mahallu Management Team
         }
         if (this.isConfigured && this.transporter) {
             try {
-                const info = await this.transporter.sendMail({
+                const sendPromise = this.transporter.sendMail({
                     from: sender,
                     to: data.email,
                     subject,
                     text: textContent,
                     html: htmlContent,
                 });
+                // Timeout race: never let email sending hang more than 8 seconds
+                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP timeout after 8000ms')), 8000));
+                const info = await Promise.race([sendPromise, timeoutPromise]);
                 logger_js_1.logger.info({ messageId: info.messageId, recipient: data.email }, `✅ 6-digit OTP email dispatched successfully via Nodemailer to ${data.email}`);
                 return { success: true, messageId: info.messageId, simulated: false };
             }
