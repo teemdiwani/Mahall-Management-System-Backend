@@ -10,6 +10,7 @@ import {
   forgotPasswordSchema,
   verifyResetOtpSchema,
   resetPasswordSchema,
+  changePasswordSchema,
 } from './auth.validation.js';
 
 const router = Router();
@@ -54,6 +55,14 @@ router.post(
   authLimiter,
   validateRequest({ body: resetPasswordSchema }),
   AuthController.resetPassword
+);
+
+router.post(
+  '/change-password',
+  authenticate,
+  authLimiter,
+  validateRequest({ body: changePasswordSchema }),
+  AuthController.changePassword
 );
 
 router.get('/me', authenticate, AuthController.getMe);

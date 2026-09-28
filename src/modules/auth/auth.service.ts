@@ -321,5 +321,36 @@ export class AuthService {
       message: 'Your password has been reset successfully. You can now sign in with your new password.',
     };
   }
+
+  static async changePassword(userId: string, currentPassword?: string, newPassword?: string) {
+    if (!newPassword || newPassword.length < 6) {
+      throw ApiError.badRequest('New password must be at least 6 characters long.');
+    }
+
+    const user = await User.findById(userId).select('+passwordHash');
+    if (!user) {
+      throw ApiError.notFound('User account not found.');
+    }
+
+    // If user already has a password, verify current password
+    if (user.passwordHash) {
+      if (!currentPassword) {
+        throw ApiError.badRequest('Current password is required to set a new password.');
+      }
+      const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!isMatch) {
+        throw ApiError.badRequest('Current password does not match.');
+      }
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.passwordHash = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    return {
+      success: true,
+      message: 'Password updated successfully.',
+    };
+  }
 }
 

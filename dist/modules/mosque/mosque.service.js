@@ -7,10 +7,10 @@ class MosqueService {
         let mosque = await mosque_model_js_1.Mosque.findOne();
         if (!mosque) {
             mosque = await mosque_model_js_1.Mosque.create({
-                name: 'Al-Noor Central Juma Masjid',
-                address: 'Mosque Road, North Ward, Mahall District',
+                name: 'Noorul Huda Central Juma Masjid, Odamala',
+                address: 'Main Road, Odamala, Malappuram, Kerala - 676505',
                 phone: '+91 495 2345678',
-                email: 'masjid@mahallconnect.org',
+                email: 'masjid@noorulhudamahall.org',
                 imamName: 'Usthad Abdullah Faizy',
                 khatibName: 'Usthad Abdullah Faizy',
                 muezzinName: 'Bilal Ahmed',

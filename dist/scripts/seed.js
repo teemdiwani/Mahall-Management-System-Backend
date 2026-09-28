@@ -466,7 +466,7 @@ const seedDatabase = async () => {
     console.log('📚 Creating Madrasa Institutions, Faculty & Students (Census)...');
     // 1. Madrasa Institutions in this Mahallu
     const m1 = await madrasa_model_js_1.Madrasa.create({
-        name: 'Al-Noor Central Madrasa',
+        name: 'Noorul Huda Central Madrasa, Odamala',
         code: 'MDR-01',
         regNumber: 'SKIMVB-412',
         board: 'Samastha Kerala Islam Matha Vidyabhyasa Board',
@@ -603,7 +603,7 @@ const seedDatabase = async () => {
         maxCapacity: 35,
         status: 'ACTIVE',
     });
-    // Additional standards for Al-Noor Central Madrasa (1 to 10)
+    // Additional standards for Noorul Huda Central Madrasa, Odamala (1 to 10)
     const remainingStandards = [1, 2, 4, 5, 7, 8, 9, 10];
     for (const std of remainingStandards) {
         await madrasa_extra_model_js_1.MadrasaClass.create({
@@ -973,10 +973,10 @@ const seedDatabase = async () => {
     ]);
     console.log('🕌 Creating Mosque Profile & Timings...');
     await mosque_model_js_1.Mosque.create({
-        name: 'Al-Noor Central Juma Masjid',
-        address: 'Mosque Road, North Ward, Mahall District, Kozhikode',
+        name: 'Noorul Huda Central Juma Masjid, Odamala',
+        address: 'Main Road, Odamala, Malappuram, Kerala - 676505',
         phone: '+91 495 2345678',
-        email: 'masjid@mahallconnect.org',
+        email: 'masjid@noorulhudamahall.org',
         imamName: 'Usthad Abdullah Faizy',
         khatibName: 'Usthad Abdullah Faizy',
         muezzinName: 'Bilal Ahmed',
@@ -1042,7 +1042,7 @@ const seedDatabase = async () => {
             category: 'COMMUNITY',
             startDate: new Date('2026-09-25T19:30:00'),
             endDate: new Date('2026-09-25T21:30:00'),
-            location: 'Mahall Hall, Al-Noor Mahall',
+            location: 'Mahall Hall, Noorul Huda Mahall Odamala',
             capacity: 300,
             status: 'UPCOMING',
             createdBy: secretaryUser._id,
@@ -1075,7 +1075,7 @@ const seedDatabase = async () => {
             category: 'RELIGIOUS',
             startDate: new Date('2026-09-20T13:00:00'),
             endDate: new Date('2026-09-20T14:30:00'),
-            location: 'Al-Noor Mosque Main Hall',
+            location: 'Noorul Huda Mosque Main Hall, Odamala',
             capacity: 500,
             status: 'UPCOMING',
             createdBy: imamUser._id,
@@ -1086,7 +1086,7 @@ const seedDatabase = async () => {
             category: 'RELIGIOUS',
             startDate: new Date('2026-06-17T07:00:00'),
             endDate: new Date('2026-06-17T12:00:00'),
-            location: 'Mahall Grounds, Al-Noor Mahall',
+            location: 'Mahall Grounds, Noorul Huda Mahall Odamala',
             capacity: 600,
             status: 'COMPLETED',
             createdBy: secretaryUser._id,
@@ -1151,7 +1151,7 @@ const seedDatabase = async () => {
     console.log('🏢 Creating Assets & Properties...');
     await asset_model_js_1.Asset.create([
         {
-            name: 'Al-Noor Central Juma Masjid Complex',
+            name: 'Noorul Huda Central Juma Masjid Complex, Odamala',
             type: 'BUILDING',
             description: 'Main two-floor prayer hall with ablution facilities, minarets, and courtyard',
             location: 'Mosque Road, North Ward',
@@ -1211,7 +1211,7 @@ const seedDatabase = async () => {
             status: 'OPERATIONAL',
         },
         {
-            name: 'Al-Noor Qabaristan & Cemetery Grounds',
+            name: 'Noorul Huda Qabaristan & Cemetery Grounds, Odamala',
             type: 'LAND',
             description: 'Main 2.5-acre community cemetery grounds with organized burial plots and boundary fencing',
             location: 'Qabaristan Road, West Ward',
@@ -1381,7 +1381,7 @@ const seedDatabase = async () => {
         },
         {
             title: 'New Madrasa Batch Enrollment Open',
-            content: 'Enrollment for the new academic batch is now open at Al-Noor Madrasa for students aged 5-16. Contact the Madrasa desk for registration and curriculum details.',
+            content: 'Enrollment for the new academic batch is now open at Noorul Huda Central Madrasa, Odamala for students aged 5-16. Contact the Madrasa desk for registration and curriculum details.',
             category: 'GENERAL',
             targetAudience: 'ALL',
             author: 'Madrasa Administration',
@@ -1421,7 +1421,7 @@ const seedDatabase = async () => {
         },
         {
             title: 'General Body Meeting - All Members Required',
-            content: 'The Annual General Meeting of Al-Noor Mahall is scheduled for 25th September 2026. All member heads are requested to attend. Agenda includes annual report, financial review, and elections.',
+            content: 'The Annual General Meeting of Noorul Huda Mahall Odamala is scheduled for 25th September 2026. All member heads are requested to attend. Agenda includes annual report, financial review, and elections.',
             category: 'GENERAL',
             targetAudience: 'ALL',
             author: 'Secretary',
@@ -1431,7 +1431,7 @@ const seedDatabase = async () => {
         },
         {
             title: 'Hajj Group 2027 - Registration Opens',
-            content: 'Registration for the Al-Noor Mahall Community Hajj Group 2027 is now open. Limited seats are available. Priority will be accorded to members performing their first Hajj.',
+            content: 'Registration for the Noorul Huda Mahall Community Hajj Group 2027 is now open. Limited seats are available. Priority will be accorded to members performing their first Hajj.',
             category: 'GENERAL',
             targetAudience: 'ALL',
             author: 'Secretary',

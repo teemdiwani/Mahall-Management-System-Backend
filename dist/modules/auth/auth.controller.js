@@ -86,6 +86,16 @@ class AuthController {
             next(error);
         }
     }
+    static async changePassword(req, res, next) {
+        try {
+            const { currentPassword, newPassword } = req.body;
+            const result = await auth_service_js_1.AuthService.changePassword(req.user._id.toString(), currentPassword, newPassword);
+            return apiResponse_js_1.ApiResponse.success(res, result, 200, result.message);
+        }
+        catch (error) {
+            next(error);
+        }
+    }
     static async getConfig(_req, res) {
         return apiResponse_js_1.ApiResponse.success(res, {
             googleClientId: (env_js_1.env.GOOGLE_CLIENT_ID || '').split(',')[0].trim() ||

@@ -39,7 +39,7 @@ export class EventsService {
     NotificationsService.broadcastNotification({
       type: 'EVENT',
       title: `🗓️ New Event: ${event.title}`,
-      message: `${event.description ? event.description.slice(0, 130) : 'Al-Noor Mahall community event'} (Date: ${event.startDate ? new Date(event.startDate).toLocaleDateString() : 'Upcoming'})`,
+      message: `${event.description ? event.description.slice(0, 130) : 'Noorul Huda Mahall Odamala community event'} (Date: ${event.startDate ? new Date(event.startDate).toLocaleDateString() : 'Upcoming'})`,
       link: '/app/events',
     }).catch(() => {});
 

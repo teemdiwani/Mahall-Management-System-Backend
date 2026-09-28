@@ -33,10 +33,10 @@ export interface IMosque extends Document {
 
 const mosqueSchema = new Schema<IMosque>(
   {
-    name: { type: String, required: true, default: 'Al-Noor Central Juma Masjid' },
-    address: { type: String, required: true, default: 'Mosque Road, North Ward, Mahall District' },
+    name: { type: String, required: true, default: 'Noorul Huda Central Juma Masjid, Odamala' },
+    address: { type: String, required: true, default: 'Main Road, Odamala, Malappuram, Kerala - 676505' },
     phone: { type: String, required: true, default: '+91 495 2345678' },
-    email: { type: String, default: 'masjid@mahallconnect.org' },
+    email: { type: String, default: 'masjid@noorulhudamahall.org' },
     imamName: { type: String, required: true, default: 'Usthad Abdullah Faizy' },
     khatibName: { type: String, default: 'Usthad Abdullah Faizy' },
     muezzinName: { type: String, default: 'Bilal Ahmed' },

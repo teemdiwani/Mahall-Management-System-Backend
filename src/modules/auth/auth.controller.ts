@@ -85,6 +85,20 @@ export class AuthController {
     }
   }
 
+  static async changePassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      const result = await AuthService.changePassword(
+        req.user!._id.toString(),
+        currentPassword,
+        newPassword
+      );
+      return ApiResponse.success(res, result, 200, result.message);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async getConfig(_req: Request, res: Response) {
     return ApiResponse.success(
       res,

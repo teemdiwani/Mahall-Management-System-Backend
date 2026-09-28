@@ -13,6 +13,7 @@ router.post('/google', rateLimiter_js_1.authLimiter, (0, validate_js_1.validateR
 router.post('/forgot-password', rateLimiter_js_1.authLimiter, (0, validate_js_1.validateRequest)({ body: auth_validation_js_1.forgotPasswordSchema }), auth_controller_js_1.AuthController.forgotPassword);
 router.post('/verify-reset-otp', rateLimiter_js_1.authLimiter, (0, validate_js_1.validateRequest)({ body: auth_validation_js_1.verifyResetOtpSchema }), auth_controller_js_1.AuthController.verifyResetOtp);
 router.post('/reset-password', rateLimiter_js_1.authLimiter, (0, validate_js_1.validateRequest)({ body: auth_validation_js_1.resetPasswordSchema }), auth_controller_js_1.AuthController.resetPassword);
+router.post('/change-password', auth_js_1.authenticate, rateLimiter_js_1.authLimiter, (0, validate_js_1.validateRequest)({ body: auth_validation_js_1.changePasswordSchema }), auth_controller_js_1.AuthController.changePassword);
 router.get('/me', auth_js_1.authenticate, auth_controller_js_1.AuthController.getMe);
 router.post('/logout', auth_controller_js_1.AuthController.logout);
 router.get('/config', auth_controller_js_1.AuthController.getConfig);

@@ -31,7 +31,7 @@ router.get('/', async (_req, res, next) => {
         const iftarPrograms = [
             {
                 date: 'Day 1',
-                sponsor: 'Al-Noor Mahall Youth Wing',
+                sponsor: 'Noorul Huda Mahall Youth Wing, Odamala',
                 venue: 'Mahall Hall',
                 menu: 'Dates, Traditional Malabar Kanji, Fruit Salad & Juice',
                 count: 350,

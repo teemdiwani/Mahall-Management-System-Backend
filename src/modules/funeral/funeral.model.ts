@@ -24,7 +24,7 @@ const funeralSchema = new Schema<IFuneral>(
     contactPerson: { type: String, required: true },
     contactPhone: { type: String, required: true },
     janaazahTime: { type: String, required: true },
-    janaazahPlace: { type: String, default: 'Al-Noor Central Masjid' },
+    janaazahPlace: { type: String, default: 'Noorul Huda Central Juma Masjid, Odamala' },
     cemeteryPlotNumber: { type: String },
     status: {
       type: String,
