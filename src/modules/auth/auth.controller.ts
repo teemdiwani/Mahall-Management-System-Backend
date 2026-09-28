@@ -89,7 +89,9 @@ export class AuthController {
     return ApiResponse.success(
       res,
       {
-        googleClientId: env.GOOGLE_CLIENT_ID || '',
+        googleClientId:
+          (env.GOOGLE_CLIENT_ID || '').split(',')[0].trim() ||
+          '815639054574-unv914bm1mqkct13bocokl373blbfreq.apps.googleusercontent.com',
       },
       200,
       'Auth configuration retrieved'

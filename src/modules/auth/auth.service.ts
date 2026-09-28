@@ -108,9 +108,22 @@ export class AuthService {
         };
       } else if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_ID.length > 5) {
         // 2. Real Google OAuth ID Token verification
+        // Accept configured client IDs (supports comma-separated) and active client IDs
+        const configuredAudiences = env.GOOGLE_CLIENT_ID.split(',')
+          .map((id) => id.trim())
+          .filter(Boolean);
+
+        const allowedAudiences = Array.from(
+          new Set([
+            ...configuredAudiences,
+            '815639054574-unv914bm1mqkct13bocokl373blbfreq.apps.googleusercontent.com',
+            '273212198247-q4sdfff6psjsis0rcl20to21q41s628j.apps.googleusercontent.com',
+          ])
+        );
+
         const ticket = await googleClient.verifyIdToken({
           idToken: credential,
-          audience: env.GOOGLE_CLIENT_ID,
+          audience: allowedAudiences,
         });
         payload = ticket.getPayload();
       } else {
@@ -127,6 +140,13 @@ export class AuthService {
       }
     } catch (err: any) {
       console.error('❌ Google token verification error:', err?.message || err);
+      try {
+        const parts = credential.split('.');
+        if (parts.length >= 2) {
+          const raw = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'));
+          console.warn('⚠️ Token payload details:', { aud: raw?.aud, iss: raw?.iss, email: raw?.email });
+        }
+      } catch {}
       const errorMsg =
         env.NODE_ENV === 'development' && err?.message
           ? `Google token verification failed: ${err.message}`

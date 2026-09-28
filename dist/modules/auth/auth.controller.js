@@ -88,7 +88,8 @@ class AuthController {
     }
     static async getConfig(_req, res) {
         return apiResponse_js_1.ApiResponse.success(res, {
-            googleClientId: env_js_1.env.GOOGLE_CLIENT_ID || '',
+            googleClientId: (env_js_1.env.GOOGLE_CLIENT_ID || '').split(',')[0].trim() ||
+                '815639054574-unv914bm1mqkct13bocokl373blbfreq.apps.googleusercontent.com',
         }, 200, 'Auth configuration retrieved');
     }
 }
